@@ -11,6 +11,7 @@ export interface App {
         }
     }
 }
+
 export interface Authority {
     administrative: string[]
     ownership: string[]
@@ -36,7 +37,7 @@ interface AdminVote {
 
 export interface Field {
     _id: {
-        getTimestamp (): number
+        getTimestamp(): number
     }
     name: string;
     body: string;
@@ -51,10 +52,17 @@ export interface Field {
     adminVote?: AdminVote
     approvePercent?: number
     items?: []
+    id?: string
+    type?: string
+}
+
+export interface ExposedFieldCounter {
+    name: string
+    value: number
 }
 
 
-export interface Map  {
+export interface Map {
     type: string;
     coordinates: number[];
 }
@@ -74,6 +82,14 @@ export interface AffiliateLink {
     link: string
     image: string
     affiliateCode: string
+}
+
+export interface AffiliateCodes {
+    affiliateUrlTemplate: string
+    affiliateCode: string[]
+    affiliateButton: string
+    affiliateProductIdTypes: string[]
+    affiliateGeoArea: string[]
 }
 
 interface OptionBody {
@@ -114,10 +130,10 @@ export interface Wobject {
     is_extending_open: boolean;
     creator: string;
     author: string;
-    authority: Authority;
+    authority: Authority | Field;
     author_permlink: string;
     weight: number;
-    parent: string;
+    parent?: string;
     children: string[];
     fields: Field[];
     map: Map;
@@ -126,16 +142,19 @@ export interface Wobject {
     status?: WobjectStatus;
     albums_count?: number;
     photos_count?: number;
-    preview_gallery: {weight: number, id: string} [];
+    preview_gallery: Field[];
     avatar?: string;
     sortCustom?: object | string;
     newsFilter?: NewsFilter[];
-    productId?: string;
+    productId?: Field[];
     price?: string;
     affiliateLinks?: AffiliateLink[];
     departments?: string[] | null;
     defaultShowLink?: string;
     topTags?: string[];
-    exposedFields?: string[];
+    exposedFields?: ExposedFieldCounter[];
     groupId?: string[];
+    options?: OptionsMap
+    menuItem?: Field[]
+    blog?: Field[]
 }

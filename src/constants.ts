@@ -187,3 +187,54 @@ export const REMOVE_OBJ_STATUSES = [
     STATUSES.RELISTED,
     STATUSES.UNAVAILABLE,
 ];
+
+export const LIST_TYPES = {
+    MENU_PAGE: 'menuPage',
+    MENU_LIST: 'menuList',
+};
+
+export const OBJECT_TYPES = {
+    HASHTAG: 'hashtag',
+    LIST: 'list',
+    PAGE: 'page',
+    RESTAURANT: 'restaurant',
+    DISH: 'dish',
+    DRINK: 'drink',
+    BUSINESS: 'business',
+    PRODUCT: 'product',
+    SERVICE: 'service',
+    COMPANY: 'company',
+    PERSON: 'person',
+    PLACE: 'place',
+    CRYPTO: 'crypto',
+    HOTEL: 'hotel',
+    INDICES: 'indices',
+    STOCKS: 'stocks',
+    CURRENCIES: 'currencies',
+    COMMODITY: 'commodity',
+    CAR: 'car',
+    TEST: 'test',
+    ORGANIZATION: 'organization',
+    MOTEL: 'motel',
+    RESORT: 'resort',
+    BnB: 'b&b',
+    BOOK: 'book',
+    WIDGET: 'widget',
+    NEWS_FEED: 'newsfeed',
+    SHOP: 'shop',
+    AFFILIATE: 'affiliate',
+    WEB_PAGE: 'webpage',
+    MAP: 'map',
+    LINK: 'link',
+    RECIPE: 'recipe',
+    GROUP: 'group',
+};
+
+
+export const REQUIREDFIELDS_PARENT = [
+    FIELDS_NAMES.NAME,
+    FIELDS_NAMES.AVATAR,
+    FIELDS_NAMES.MAP,
+    FIELDS_NAMES.LIST_ITEM,
+    FIELDS_NAMES.SORT_CUSTOM,
+];

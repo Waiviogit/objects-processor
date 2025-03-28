@@ -1,5 +1,5 @@
 import {s} from "vitest/dist/reporters-w_64AS5f";
-import {ActiveVote, App, Field, OptionsMap, Wobject} from "./interfaces";
+import {ActiveVote, AffiliateCodes, App, ExposedFieldCounter, Field, OptionsMap, Wobject} from "./interfaces";
 import {
     ADMIN_ROLES,
     ARRAY_FIELDS,
@@ -10,10 +10,12 @@ import {
     categorySwitcher,
     INDEPENDENT_FIELDS,
     LANGUAGES_POPULARITY,
-    FULL_SINGLE_FIELDS,
+    FULL_SINGLE_FIELDS, OBJECT_TYPES, REQUIREDFIELDS_PARENT, LIST_TYPES,
 } from "./constants";
 import * as _ from "lodash";
 import {jsonHelper} from "./helpers";
+import {makeAffiliateLinks} from "./makeAffiliateLinks";
+import {EXPOSED_FIELDS_FOR_OBJECT_TYPE} from "./exposedFields";
 
 
 export interface FindParentsByPermlinkFn {
@@ -103,17 +105,24 @@ interface AddOptions {
     locale: string
 }
 
+interface GetParentInfo {
+    locale: string,
+    app: App,
+    parent: Wobject,
+}
+
 interface ProcessWobjects {
     wobjects: Wobject[],
     fields: string [],
-    hiveData: boolean,
+    hiveData?: boolean,
     locale: string,
     app: App,
-    returnArray: boolean,
-    topTagsLimit: number,
-    countryCode: string,
-    reqUserName: string,
-    affiliateCodes: object[],
+    returnArray?: boolean,
+    topTagsLimit?: number,
+    countryCode?: string,
+    reqUserName?: string,
+    affiliateCodes?: AffiliateCodes[],
+    mobile?: boolean,
 }
 
 export class ObjectProcessor {
@@ -437,6 +446,32 @@ export class ObjectProcessor {
         return winningFields;
     };
 
+    getExposedFields(objectType: string, fields: Field[]): ExposedFieldCounter[] {
+        const exposedMap = new Map(
+            EXPOSED_FIELDS_FOR_OBJECT_TYPE[objectType as keyof typeof EXPOSED_FIELDS_FOR_OBJECT_TYPE]
+                .map((el) => [el, 0]),
+        );
+        if (exposedMap.has(FIELDS_NAMES.LIST_ITEM)) exposedMap.set(LIST_TYPES.MENU_PAGE, 0);
+
+        for (const field of fields) {
+            const value = exposedMap.get(field.name);
+
+            if (field.name === FIELDS_NAMES.LIST_ITEM && field.type === LIST_TYPES.MENU_PAGE) {
+                const listValue = exposedMap.get(field.type);
+                exposedMap.set(field.type, (listValue || 0) + 1);
+                continue;
+            }
+            if (value !== undefined) exposedMap.set(field.name, value + 1);
+        }
+
+        const exposedFieldsWithCounters = Array.from(exposedMap, ([name, value]) => ({
+            name,
+            value,
+        }));
+        exposedMap.clear();
+        return exposedFieldsWithCounters;
+    };
+
     private calculateApprovePercent(field: Field): number {
         if (field.adminVote) return field.adminVote.status === VOTE_STATUSES.APPROVED ? 100 : 0;
         if (field.weight <= 0) return 0;
@@ -594,8 +629,8 @@ export class ObjectProcessor {
         return _.find(fields, (f) => f.body === body);
     }
 
-    private groupOptions  (options, obj?: Wobject): OptionsMap  {
-       return  _.chain(options)
+    private groupOptions(options, obj?: Wobject): OptionsMap {
+        return _.chain(options)
             .map((option) => ({
                 ...option,
                 body: jsonHelper.parseJson(option.body),
@@ -664,6 +699,146 @@ export class ObjectProcessor {
     };
 
 
+    async getParentInfo({
+                            locale,
+                            app,
+                            parent,
+                        }: GetParentInfo) {
+
+        if (!parent) return '';
+
+
+        return this.processWobjects({
+            locale,
+            fields: REQUIREDFIELDS_PARENT,
+            wobjects: [_.omit(parent, 'parent')],
+            returnArray: false,
+            app,
+        });
+
+    };
+
+    getLinkFromMenuItem(mainObjectPermlink: string, menu: Field): string {
+        const defaultLink = `/object/${mainObjectPermlink}`;
+        const body = jsonHelper.parseJson(menu.body, null);
+        if (!body) return defaultLink;
+        if (!body.linkToObject) return defaultLink;
+        const links = {
+            [OBJECT_TYPES.LIST]: `/menu#${body.linkToObject}`,
+            [OBJECT_TYPES.PAGE]: `/page#${body.linkToObject}`,
+            [OBJECT_TYPES.NEWS_FEED]: `/newsfeed/${body.linkToObject}`,
+            [OBJECT_TYPES.WIDGET]: `/widget#${body.linkToObject}`,
+            default: '',
+        };
+
+        const linkEnding = links[body.objectType] || links.default;
+
+        return `${defaultLink}${linkEnding}`;
+    };
+
+    getCustomSortLink(obj: Wobject): string {
+        if (obj.object_type === OBJECT_TYPES.LIST) return `/object/${obj.author_permlink}/list`;
+        const defaultLink = `/object/${obj.author_permlink}`;
+
+        const menu = _.find(obj?.menuItem, (el) => el.permlink === _.get(obj, 'sortCustom.include[0]'));
+        if (menu) {
+            return this.getLinkFromMenuItem(obj.author_permlink, menu);
+        }
+
+        const field = _.find(_.get(obj, 'listItem', []), {body: _.get(obj, 'sortCustom.include[0]')});
+        const blog = _.find(_.get(obj, 'blog', []), (el) => el.permlink === _.get(obj, 'sortCustom.include[0]'));
+        const news = _.find(_.get(obj, 'newsFilter', []), (el) => el.permlink === _.get(obj, 'sortCustom.include[0]'));
+        if (field) return `/object/${obj.author_permlink}/${field.type === 'menuPage' ? 'page' : 'menu'}#${field.body}`;
+        if (blog) return `/object/${obj.author_permlink}/blog/@${blog.body}`;
+        if (news) return `/object/${obj.author_permlink}/newsFilter/${news.permlink}`;
+
+        return defaultLink;
+    };
+
+
+    getDefaultLink(obj: Wobject) {
+        const defaultLink = `/object/${obj.author_permlink}`;
+        const menu = _.find(obj?.menuItem, (el) => el.name === FIELDS_NAMES.MENU_ITEM);
+        if (menu) return this.getLinkFromMenuItem(obj.author_permlink, menu);
+
+        let listItem = _.get(obj, 'listItem', []);
+        if (listItem.length) {
+            if (_.find(listItem, (list) => list.type === 'menuList')) {
+                listItem = _.filter(listItem, (list) => list.type === 'menuList');
+            }
+
+            const item = _
+                .chain(listItem)
+                .orderBy([(list) => _.get(list, 'adminVote.timestamp', 0), 'weight'], ['desc', 'desc'])
+                .first()
+                .value();
+            return `/object/${obj.author_permlink}/${item.type === 'menuPage' ? 'page' : 'menu'}#${item.body}`;
+        }
+        if (_.get(obj, 'newsFilter', []).length) return `/object/${obj.author_permlink}/newsFilter/${obj?.newsFilter?.[0].permlink}`;
+        if (_.get(obj, 'blog', []).length) return `/object/${obj.author_permlink}/blog/@${obj?.blog?.[0].body}`;
+
+        return defaultLink;
+    };
+
+
+    getLinkToPageLoad(obj: Wobject, mobile?: boolean) {
+        if (mobile) {
+            return obj.object_type === OBJECT_TYPES.HASHTAG
+                ? `/object/${obj.author_permlink}`
+                : `/object/${obj.author_permlink}/about`;
+        }
+        if (_.get(obj, 'sortCustom.include', []).length) return this.getCustomSortLink(obj);
+
+        switch (obj.object_type) {
+            case OBJECT_TYPES.PAGE:
+                return `/object/${obj.author_permlink}/page`;
+            case OBJECT_TYPES.LIST:
+                return `/object/${obj.author_permlink}/list`;
+            case OBJECT_TYPES.BUSINESS:
+            case OBJECT_TYPES.PRODUCT:
+            case OBJECT_TYPES.SERVICE:
+            case OBJECT_TYPES.COMPANY:
+            case OBJECT_TYPES.PERSON:
+            case OBJECT_TYPES.PLACE:
+            case OBJECT_TYPES.HOTEL:
+            case OBJECT_TYPES.RESTAURANT:
+                return this.getDefaultLink(obj);
+            case OBJECT_TYPES.WIDGET:
+                return `/object/${obj.author_permlink}/widget`;
+            case OBJECT_TYPES.NEWS_FEED:
+                return `/object/${obj.author_permlink}/newsfeed`;
+            case OBJECT_TYPES.SHOP:
+                return `/object/${obj.author_permlink}/shop`;
+            case OBJECT_TYPES.WEB_PAGE:
+                return `/object/${obj.author_permlink}/webpage`;
+            case OBJECT_TYPES.MAP:
+                return `/object/${obj.author_permlink}/map`;
+            case OBJECT_TYPES.GROUP:
+                return `/object/${obj.author_permlink}/group`;
+            default:
+                return `/object/${obj.author_permlink}`;
+        }
+    };
+
+
+    getTopTags(obj: Wobject, limit = 2): string [] {
+        const tagCategories = _.get(obj, 'tagCategory', []);
+        if (_.isEmpty(tagCategories)) return [];
+        let tags: string[] = [];
+        for (const tagCategory of tagCategories) {
+            // @ts-ignore
+            tags = _.concat(tags, tagCategory.items);
+        }
+
+        return _
+            .chain(tags)
+            .orderBy('weight', 'desc')
+            .slice(0, limit)
+            .map('body')
+            .value();
+    };
+
+
     async processWobjects({
                               wobjects,
                               fields,
@@ -672,10 +847,11 @@ export class ObjectProcessor {
                               app,
                               returnArray = true,
                               topTagsLimit,
-                              countryCode,
+                              countryCode = '',
                               reqUserName,
                               affiliateCodes = [],
-                          }: ProcessWobjects): Promise<Wobject[]> {
+                              mobile
+                          }: ProcessWobjects): Promise<Wobject[] | Wobject> {
 
         const filteredWobj: Wobject[] = [];
         if (!_.isArray(wobjects)) return filteredWobj;
@@ -702,7 +878,7 @@ export class ObjectProcessor {
             : app?.owner;
 
         for (let obj of wobjects) {
-            let exposedFields = [];
+            let exposedFields: ExposedFieldCounter[] = [];
             obj.parent = '';
             if (obj.newsFilter) obj = _.omit(obj, ['newsFilter']);
 
@@ -727,12 +903,8 @@ export class ObjectProcessor {
             }
 
             /** If flag hiveData exists - fill in wobj fields with hive data */
-            if (hiveData) {
-                // only if 1 object processed no need to refactor before for of
-                //todo exposed fields from objectsBot
-                // const { objectType } = await ObjectTypeModel.getOne({ name: obj.object_type });
-                // exposedFields = getExposedFields(objectType, obj.fields);
-            }
+            if (hiveData) exposedFields = this.getExposedFields(obj.object_type, obj.fields);
+
 
             obj.fields = this.addDataToFields({
                 isOwnershipObj: !!ownership.length,
@@ -797,10 +969,10 @@ export class ObjectProcessor {
             }
             if (_.isString(obj.parent)) {
                 const parent = _.find(parents, {author_permlink: obj.parent});
-                obj.parent = await getParentInfo({
+                obj.parent = await this.getParentInfo({
                     locale,
                     app,
-                    parent,
+                    parent: parent as Wobject,
                 });
             }
             if (obj.productId && obj.object_type !== OBJECT_TYPES.PERSON && affiliateCodes.length) {
@@ -813,14 +985,16 @@ export class ObjectProcessor {
             if (obj.departments && typeof obj.departments[0] === 'string') {
                 obj.departments = null;
             }
-            obj.defaultShowLink = getLinkToPageLoad(obj);
+            obj.defaultShowLink = this.getLinkToPageLoad(obj, mobile);
             obj.exposedFields = exposedFields;
+
+            // @ts-ignore
             obj.authority = _.find(
                 obj.authority,
-                (a) => a.creator === reqUserName && a.body === 'administrative',
+                (a: Field) => a.creator === reqUserName && a.body === 'administrative',
             );
             if (!hiveData) obj = _.omit(obj, ['fields', 'latest_posts', 'last_posts_counts_by_hours', 'tagCategories', 'children']);
-            if (_.has(obj, FIELDS_NAMES.TAG_CATEGORY)) obj.topTags = getTopTags(obj, topTagsLimit);
+            if (_.has(obj, FIELDS_NAMES.TAG_CATEGORY)) obj.topTags = this.getTopTags(obj, topTagsLimit);
             filteredWobj.push(obj);
         }
         if (!returnArray) return filteredWobj[0];
