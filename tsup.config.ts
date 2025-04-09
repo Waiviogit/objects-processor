@@ -9,4 +9,10 @@ export default defineConfig({
   clean: true,
   minify: true,
   treeshake: true,
+  target: 'node16',
+  platform: 'node',
+  esbuildOptions(options) {
+    options.keepNames = true;
+    return options;
+  },
 }); 

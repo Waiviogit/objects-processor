@@ -20,15 +20,21 @@ export interface Authority {
 export interface ActiveVote {
     voter: string
     weight: number
+    weightWAIV?: number
     percent: number
     rshares_weight: number
     ownership?: boolean
     administrative?: boolean
     owner?: boolean
     master?: boolean
+    admin?: boolean
+    _id?: {
+        getTimestamp(): number
+    }
+    timestamp?: number
 }
 
-interface AdminVote {
+export interface AdminVote {
     role: string;
     status: string;
     name: string;
@@ -51,7 +57,7 @@ export interface Field {
     createdAt?: number;
     adminVote?: AdminVote
     approvePercent?: number
-    items?: []
+    items?: Field[]
     id?: string
     type?: string
 }
@@ -98,7 +104,7 @@ interface OptionBody {
     image: string;
 }
 
-interface Option {
+export interface Option {
     name: string;
     body: OptionBody;
     weight: number;

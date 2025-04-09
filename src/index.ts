@@ -1,5 +1,4 @@
-import {s} from "vitest/dist/reporters-w_64AS5f";
-import {ActiveVote, AffiliateCodes, App, ExposedFieldCounter, Field, OptionsMap, Wobject} from "./interfaces";
+import {ActiveVote, AdminVote, AffiliateCodes, App, ExposedFieldCounter, Field, Option, OptionsMap, Wobject} from "./interfaces";
 import {
     ADMIN_ROLES,
     ARRAY_FIELDS,
@@ -73,7 +72,7 @@ interface AddAdminVote {
 
 interface ArrayFieldFilter {
     idFields: Field[]
-    allFields: object
+    allFields: Record<string, Field[]>
     filter: string[]
     id: string
 }
@@ -92,7 +91,7 @@ interface ArrayFieldPush {
 interface SetWinningFields {
     id: string,
     winningField: Field,
-    winningFields: object,
+    winningFields: Record<string, any>,
 }
 
 interface AddOptions {
@@ -133,55 +132,80 @@ export class ObjectProcessor {
     private readonly masterAccount: string;
 
     constructor(options: ProcessorOptions = {} as ProcessorOptions) {
-        this.findParentsByPermlink = options.findParentsByPermlink
-        this.getWaivioAdminsAndOwner = options.getWaivioAdminsAndOwner
-        this.getBlacklist = options.getBlacklist
-        this.getObjectsByGroupId = options.getObjectsByGroupId
-        this.masterAccount = options.masterAccount
+        this.findParentsByPermlink = options.findParentsByPermlink;
+        this.getWaivioAdminsAndOwner = options.getWaivioAdminsAndOwner;
+        this.getBlacklist = options.getBlacklist;
+        this.getObjectsByGroupId = options.getObjectsByGroupId;
+        this.masterAccount = options.masterAccount;
+
+        // Bind methods to ensure proper 'this' context
+        this.getOwnerAndAdmins = this.getOwnerAndAdmins.bind(this);
+        this.processWobjects = this.processWobjects.bind(this);
+        this.getFieldsToDisplay = this.getFieldsToDisplay.bind(this);
+        this.getFilteredFields = this.getFilteredFields.bind(this);
+        this.addDataToFields = this.addDataToFields.bind(this);
+        this.getAssignedAdmins = this.getAssignedAdmins.bind(this);
+        this.addAdminVote = this.addAdminVote.bind(this);
+        this.calculateApprovePercent = this.calculateApprovePercent.bind(this);
+        this.getFieldVoteRole = this.getFieldVoteRole.bind(this);
+        this.arrayFieldFilter = this.arrayFieldFilter.bind(this);
+        this.arrayFieldPush = this.arrayFieldPush.bind(this);
+        this.setWinningFields = this.setWinningFields.bind(this);
+        this.getSingleFieldsDisplay = this.getSingleFieldsDisplay.bind(this);
+        this.specialFieldFilter = this.specialFieldFilter.bind(this);
+        this.filterAssignedAdmin = this.filterAssignedAdmin.bind(this);
+        this.listItemsPick = this.listItemsPick.bind(this);
+        this.getLangByPopularity = this.getLangByPopularity.bind(this);
+        this.filterFieldValidation = this.filterFieldValidation.bind(this);
+        this.getExposedFields = this.getExposedFields.bind(this);
+        this.findFieldByBody = this.findFieldByBody.bind(this);
+        this.groupOptions = this.groupOptions.bind(this);
+        this.addOptions = this.addOptions.bind(this);
+        this.getParentInfo = this.getParentInfo.bind(this);
+        this.getLinkFromMenuItem = this.getLinkFromMenuItem.bind(this);
+        this.getCustomSortLink = this.getCustomSortLink.bind(this);
+        this.getDefaultLink = this.getDefaultLink.bind(this);
+        this.getLinkToPageLoad = this.getLinkToPageLoad.bind(this);
+        this.getTopTags = this.getTopTags.bind(this);
     }
 
-    private arrayFieldPush({
-                               filter = [],
-                               field,
-                           }: ArrayFieldPush) {
+    private arrayFieldPush({filter = [], field}: ArrayFieldPush) {
         if (_.includes(filter, FIELDS_NAMES.GALLERY_ALBUM)) return false;
         if (_.get(field, 'adminVote.status') === VOTE_STATUSES.APPROVED) return true;
 
         return (field.weight > 0 && (field.approvePercent || 0) > MIN_PERCENT_TO_SHOW_UPDATE);
-    };
+    }
 
-    private setWinningFields = ({id, winningField, winningFields}: SetWinningFields) => {
+    private setWinningFields({id, winningField, winningFields}: SetWinningFields) {
         winningFields[id] = this.getSingleFieldsDisplay(winningField);
 
         if (id === FIELDS_NAMES.DESCRIPTION) {
             // @ts-ignore
             winningFields.descriptionCreator = winningField.creator;
         }
-    };
+    }
 
     private getSingleFieldsDisplay(field: Field) {
         if (!field) return;
         if (FULL_SINGLE_FIELDS.includes(field.name)) return field;
         return field.body;
-    };
+    }
 
-    private specialFieldFilter(idField: Field, allFields: object, id: string) {
+    private specialFieldFilter(idField: Field, allFields: Record<string, Field[]>, id: string) {
         if (!idField.adminVote && idField.weight < 0) return null;
-        idField.items = [];
+        idField.items = [] as Field[];
         const filteredItems = _.filter(
-            allFields[categorySwitcher[id]]
-            (item)
-    =>
-        item.id === idField.id && _.get(item, 'adminVote.status') !== VOTE_STATUSES.REJECTED
-    )
-        ;
+            allFields[categorySwitcher[id]],
+            (item) =>
+                item.id === idField.id && _.get(item, 'adminVote.status') !== VOTE_STATUSES.REJECTED
+        );
 
         for (const itemField of filteredItems) {
             if (!idField.adminVote && itemField.weight < 0) continue;
             idField.items.push(itemField);
         }
         return idField;
-    };
+    }
 
     private arrayFieldFilter({
                                  idFields,
@@ -260,7 +284,7 @@ export class ObjectProcessor {
             result,
             id,
         };
-    };
+    }
 
     private filterAssignedAdmin(admins: string[], field: Field): boolean {
         return (field.name === FIELDS_NAMES.DELEGATION
@@ -303,9 +327,9 @@ export class ObjectProcessor {
         }
 
         return result;
-    };
+    }
 
-    private getLangByPopularity = (existedLanguages: string[]) => {
+    private getLangByPopularity(existedLanguages: string[]) {
         const filtered = _.filter(
             LANGUAGES_POPULARITY,
             (l) => _.includes(existedLanguages, l.lang),
@@ -313,7 +337,7 @@ export class ObjectProcessor {
         const found = _.minBy(filtered, 'score');
         if (!found) return 'en-US';
         return found.lang;
-    };
+    }
 
     private filterFieldValidation(filter: string[], field: Field, locale: string, ownership: string []) {
         if (field.locale === 'auto') field.locale = 'en-US';
@@ -325,12 +349,12 @@ export class ObjectProcessor {
                 || (result && _.includes(ownership, field?.creator));
         }
         return result;
-    };
+    }
 
     private getFilteredFields(fields: Field[], locale: string, filter: string[], ownership: string[]) {
-        const fieldsLanguages = [];
+        const fieldsLanguages: { type: string; languages: string[] }[] = [];
 
-        const fieldTypes = _.reduce(fields, (acc, el) => {
+        const fieldTypes = _.reduce(fields, (acc: Record<string, Field[]>, el) => {
             const conditionLocale = _.get(el, 'adminVote.status') === VOTE_STATUSES.APPROVED
                 || el.weight > 0;
 
@@ -359,7 +383,7 @@ export class ObjectProcessor {
             return acc;
         }, {});
 
-        return _.reduce(fieldTypes, (acc, el, index) => {
+        return _.reduce(fieldTypes, (acc: Field[], el, index) => {
             if ([FIELDS_NAMES.LIST_ITEM, FIELDS_NAMES.MENU_ITEM].includes(index)) {
                 const items = this.listItemsPick({listItems: el, locale, index});
                 acc = [...acc, ...items];
@@ -389,11 +413,11 @@ export class ObjectProcessor {
             acc = [...acc, ...nativeLang];
             return acc;
         }, []);
-    };
+    }
 
-    private getFieldsToDisplay = (fields: Field[], locale: string, filter: string[], permlink: string, ownership: string[]) => {
+    private getFieldsToDisplay(fields: Field[], locale: string, filter: string[], permlink: string, ownership: string[]) {
         locale = locale === 'auto' ? 'en-US' : locale;
-        const winningFields = {};
+        const winningFields: Record<string, any> = {};
         const filteredFields = this.getFilteredFields(fields, locale, filter, ownership);
 
         if (!filteredFields.length) return {};
@@ -422,9 +446,9 @@ export class ObjectProcessor {
             if (approvedFields.length) {
                 const rolesPriority = [ADMIN_ROLES.MASTER, ADMIN_ROLES.OWNER, ADMIN_ROLES.ADMIN];
 
-                const winningField = rolesPriority.reduce((winning, role) => {
+                const winningField = rolesPriority.reduce<Field | null>((winning, role) => {
                     if (winning) return winning;
-                    const roleVotes = _.filter(approvedFields, (field) => field.adminVote.role === role);
+                    const roleVotes = _.filter(approvedFields, (field: Field) => field?.adminVote?.role === role);
                     return _.maxBy(roleVotes, 'adminVote.timestamp') || winning;
                 }, null) || _.maxBy(approvedFields, 'adminVote.timestamp');
 
@@ -435,16 +459,16 @@ export class ObjectProcessor {
                 continue;
             }
             // pick from heaviest field
-            const winningField = _.maxBy(groupedFields[id], (field) => {
+            const winningField = _.maxBy(groupedFields[id], (field: Field) => {
                 if (_.get(field, 'adminVote.status') !== 'rejected' && field.weight > 0
-                    && field.approvePercent > MIN_PERCENT_TO_SHOW_UPDATE) {
+                    && (field?.approvePercent || 0) > MIN_PERCENT_TO_SHOW_UPDATE) {
                     return field.weight;
                 }
             });
             if (winningField) this.setWinningFields({id, winningFields, winningField});
         }
         return winningFields;
-    };
+    }
 
     getExposedFields(objectType: string, fields: Field[]): ExposedFieldCounter[] {
         const exposedMap = new Map(
@@ -470,26 +494,28 @@ export class ObjectProcessor {
         }));
         exposedMap.clear();
         return exposedFieldsWithCounters;
-    };
+    }
 
     private calculateApprovePercent(field: Field): number {
         if (field.adminVote) return field.adminVote.status === VOTE_STATUSES.APPROVED ? 100 : 0;
         if (field.weight <= 0) return 0;
 
-        const rejectsWeight = _.sumBy(field.active_votes, (vote) => {
+        const rejectsWeight = _.sumBy(field.active_votes, (vote: ActiveVote) => {
             if (vote.percent < 0) {
                 return -(+vote.weight || -1);
             }
+            return 0;
         }) || 0;
-        const approvesWeight = _.sumBy(field.active_votes, (vote) => {
+        const approvesWeight = _.sumBy(field.active_votes, (vote: ActiveVote) => {
             if (vote.percent > 0) {
                 return +vote.weight || 1;
             }
+            return 0;
         }) || 0;
         if (!rejectsWeight) return 100;
         const percent = _.round((approvesWeight / (approvesWeight + rejectsWeight)) * 100, 3);
         return percent > 0 ? percent : 0;
-    };
+    }
 
     private getFieldVoteRole(vote: ActiveVote) {
         let role = ADMIN_ROLES.ADMIN;
@@ -499,12 +525,12 @@ export class ObjectProcessor {
         if (vote.master) role = ADMIN_ROLES.MASTER;
 
         return role;
-    };
+    }
 
     private addAdminVote({
                              field, owner, admins, administrative, isOwnershipObj, ownership,
-                         }: AddAdminVote) {
-        let adminVote, administrativeVote, ownershipVote, ownerVote, masterVote;
+                         }: AddAdminVote): AdminVote | undefined {
+        let adminVote: ActiveVote | undefined, administrativeVote: ActiveVote | undefined, ownershipVote: ActiveVote | undefined, ownerVote: ActiveVote | undefined, masterVote: ActiveVote | undefined ;
         _.forEach(field.active_votes, (vote) => {
             vote.timestamp = vote._id
                 ? vote._id.getTimestamp().valueOf()
@@ -529,19 +555,19 @@ export class ObjectProcessor {
 
         /** If field includes admin votes fill in it */
         if (masterVote || ownerVote || adminVote || administrativeVote || ownershipVote) {
-            const mainVote = masterVote || ownerVote || adminVote || ownershipVote || administrativeVote;
+            const mainVote = (masterVote || ownerVote || adminVote || ownershipVote || administrativeVote) as ActiveVote;
             if (mainVote?.percent !== 0) {
                 return {
-                    role: this.getFieldVoteRole(mainVote as unknown as ActiveVote),
+                    role: this.getFieldVoteRole(mainVote),
                     status: mainVote?.percent > 0 ? VOTE_STATUSES.APPROVED : VOTE_STATUSES.REJECTED,
                     name: mainVote?.voter,
-                    timestamp: mainVote?.timestamp,
+                    timestamp: mainVote?.timestamp || 0,
                 };
             }
         }
-    };
+    }
 
-    private getOwnerAndAdmins = (app: App) => {
+    private getOwnerAndAdmins(app: App) {
         let owner = app?.owner || '';
         const admins = app?.admins ?? [];
         /** if owner add himself to admins means that he has same rights on object as admins */
@@ -550,7 +576,7 @@ export class ObjectProcessor {
         }
 
         return {owner, admins};
-    };
+    }
 
     private addDataToFields({
                                 fields,
@@ -576,7 +602,7 @@ export class ObjectProcessor {
             ) {
                 field.active_votes = _.filter(field.active_votes, (o) => !_.includes(blacklist, o.voter));
                 const weightHive = _.sumBy(field.active_votes, (vote) => vote.weight) || 0;
-                const weightWaiv = _.sumBy(field.active_votes, (vote) => vote.weightWAIV) || 0;
+                const weightWaiv = _.sumBy(field.active_votes, (vote) => vote.weightWAIV || 0) || 0;
                 field.weight = weightHive + weightWaiv;
             }
             if (_.has(field, '_id')) field.createdAt = field._id.getTimestamp().valueOf();
@@ -588,7 +614,7 @@ export class ObjectProcessor {
             field.approvePercent = this.calculateApprovePercent(field);
         }
         return fields;
-    };
+    }
 
     private getAssignedAdmins({
                                   admins = [],
@@ -612,7 +638,7 @@ export class ObjectProcessor {
             blacklist,
         });
 
-        const processed = this.getFieldsToDisplay(
+        const processed: Record<string, any[]> = this.getFieldsToDisplay(
             fields,
             'en-US',
             [FIELDS_NAMES.DELEGATION],
@@ -623,16 +649,17 @@ export class ObjectProcessor {
         if (!processed[FIELDS_NAMES.DELEGATION]) return [];
 
         return processed[FIELDS_NAMES.DELEGATION].map((el) => el.body);
-    };
+    }
 
-    private findFieldByBody(fields: Field[], body: string): Field {
+    private findFieldByBody(fields: Field[], body: string): Field | undefined {
         return _.find(fields, (f) => f.body === body);
     }
 
-    private groupOptions(options, obj?: Wobject): OptionsMap {
+    private groupOptions(options: Option[], obj?: Wobject): OptionsMap {
         return _.chain(options)
             .map((option) => ({
                 ...option,
+                     // @ts-ignore
                 body: jsonHelper.parseJson(option.body),
                 ...(obj && {
                     author_permlink: obj.author_permlink,
@@ -664,7 +691,7 @@ export class ObjectProcessor {
 
         const wobjects = await this.getObjectsByGroupId(object.groupId || [])
 
-        const options = _.reduce(wobjects, (acc, el) => {
+        const options = _.reduce(wobjects, (acc: any[], el) => {
             el.fields = this.addDataToFields({
                 isOwnershipObj: !!ownership.length,
                 fields: _.compact(el.fields),
@@ -685,7 +712,7 @@ export class ObjectProcessor {
                 && !_.isEmpty(el.options);
 
             if (conditionToAdd) {
-                acc.push(..._.map(el.options, (opt) => ({
+                acc.push(..._.map(el.options, (opt: any) => ({
                     ...opt,
                     author_permlink: el.author_permlink,
                     price: el.price,
@@ -740,14 +767,14 @@ export class ObjectProcessor {
         if (obj.object_type === OBJECT_TYPES.LIST) return `/object/${obj.author_permlink}/list`;
         const defaultLink = `/object/${obj.author_permlink}`;
 
-        const menu = _.find(obj?.menuItem, (el) => el.permlink === _.get(obj, 'sortCustom.include[0]'));
+        const menu = _.find(obj?.menuItem, (el) => el.permlink === _.get(obj, 'sortCustom.include[0]')) as Field | undefined;
         if (menu) {
             return this.getLinkFromMenuItem(obj.author_permlink, menu);
         }
 
-        const field = _.find(_.get(obj, 'listItem', []), {body: _.get(obj, 'sortCustom.include[0]')});
-        const blog = _.find(_.get(obj, 'blog', []), (el) => el.permlink === _.get(obj, 'sortCustom.include[0]'));
-        const news = _.find(_.get(obj, 'newsFilter', []), (el) => el.permlink === _.get(obj, 'sortCustom.include[0]'));
+        const field = _.find(_.get(obj, 'listItem', []), {body: _.get(obj, 'sortCustom.include[0]')}) as Field | undefined;
+        const blog = _.find(_.get(obj, 'blog', []), (el) => el.permlink === _.get(obj, 'sortCustom.include[0]'))as Field | undefined;
+        const news = _.find(_.get(obj, 'newsFilter', []), (el) => el.permlink === _.get(obj, 'sortCustom.include[0]')) as Field | undefined;
         if (field) return `/object/${obj.author_permlink}/${field.type === 'menuPage' ? 'page' : 'menu'}#${field.body}`;
         if (blog) return `/object/${obj.author_permlink}/blog/@${blog.body}`;
         if (news) return `/object/${obj.author_permlink}/newsFilter/${news.permlink}`;
@@ -761,7 +788,7 @@ export class ObjectProcessor {
         const menu = _.find(obj?.menuItem, (el) => el.name === FIELDS_NAMES.MENU_ITEM);
         if (menu) return this.getLinkFromMenuItem(obj.author_permlink, menu);
 
-        let listItem = _.get(obj, 'listItem', []);
+        let listItem = _.get(obj, 'listItem', []) as Field[];
         if (listItem.length) {
             if (_.find(listItem, (list) => list.type === 'menuList')) {
                 listItem = _.filter(listItem, (list) => list.type === 'menuList');
@@ -773,6 +800,7 @@ export class ObjectProcessor {
                 .orderBy([(list) => _.get(list, 'adminVote.timestamp', 0), 'weight'], ['desc', 'desc'])
                 .first()
                 .value();
+            if (!item) return defaultLink;
             return `/object/${obj.author_permlink}/${item.type === 'menuPage' ? 'page' : 'menu'}#${item.body}`;
         }
         if (_.get(obj, 'newsFilter', []).length) return `/object/${obj.author_permlink}/newsFilter/${obj?.newsFilter?.[0].permlink}`;
@@ -884,8 +912,8 @@ export class ObjectProcessor {
             if (obj.newsFilter) obj = _.omit(obj, ['newsFilter']);
 
             /** Get app admins, wobj administrators, which was approved by app owner(creator) */
-            const ownership = _.intersection(_.get(obj, 'authority.ownership', []), _.get(app, 'authority', []));
-            const administrative = _.intersection(_.get(obj, 'authority.administrative', []), _.get(app, 'authority', []));
+            const ownership = _.intersection(_.get(obj, 'authority.ownership', [] as string[]), _.get(app, 'authority', [] as string[]));
+            const administrative = _.intersection(_.get(obj, 'authority.administrative', [] as string[]), _.get(app, 'authority', [] as string[]));
 
             // get admins that can be assigned by owner or other admins
             const assignedAdmins = this.getAssignedAdmins({
@@ -896,11 +924,13 @@ export class ObjectProcessor {
             if (objectControl
                 && (!_.isEmpty(administrative)
                     || !_.isEmpty(ownership)
-                    || _.get(obj, 'authority.administrative', []).includes(extraAuthority)
-                    || _.get(obj, 'authority.ownership', []).includes(extraAuthority)
+                    || (extraAuthority && _.get(obj, 'authority.administrative', [] as string[]).includes(extraAuthority))
+                    || (extraAuthority && _.get(obj, 'authority.ownership', [] as string[]).includes(extraAuthority))
                 )
             ) {
-                ownership.push(extraAuthority, ...objectAdmins);
+                if (extraAuthority) {
+                    ownership.push(extraAuthority, ...objectAdmins);
+                }
             }
 
             /** If flag hiveData exists - fill in wobj fields with hive data */
@@ -918,9 +948,11 @@ export class ObjectProcessor {
                 blacklist,
             });
             /** Omit map, because wobject has field map, temp solution? maybe field map in wobj not need */
+            // @ts-ignore
             obj = _.omit(obj, ['map', 'search']);
             obj = {
                 ...obj,
+                app: obj.app || '',
                 ...this.getFieldsToDisplay(obj.fields, locale, fields, obj.author_permlink, ownership),
             };
 
@@ -931,7 +963,7 @@ export class ObjectProcessor {
                 obj.preview_gallery = _.orderBy(_.get(obj, FIELDS_NAMES.GALLERY_ITEM, []), ['weight'], ['desc']);
                 if (obj.avatar) {
                     obj.preview_gallery.unshift({
-                        ...this.findFieldByBody(obj.fields, obj.avatar),
+                        ...this.findFieldByBody(obj.fields, obj.avatar)!,
                         id: obj.author_permlink,
                     });
                 }
@@ -946,6 +978,7 @@ export class ObjectProcessor {
                             blacklist,
                             locale,
                         })
+                             // @ts-ignore
                         : this.groupOptions(obj.options, obj);
                 }
             }
@@ -961,7 +994,8 @@ export class ObjectProcessor {
                         blacklist,
                         locale,
                     })
-                    : this.groupOptions(obj.options, obj);
+                         // @ts-ignore
+                    : this.groupOptions(obj.options || [], obj);
             }
 
             if (obj.sortCustom) obj.sortCustom = JSON.parse(obj.sortCustom as string);
@@ -969,12 +1003,13 @@ export class ObjectProcessor {
                 obj.newsFilter = _.map(obj.newsFilter, (item) => _.pick(item, ['title', 'permlink', 'name']));
             }
             if (_.isString(obj.parent)) {
-                const parent = _.find(parents, {author_permlink: obj.parent});
-                obj.parent = await this.getParentInfo({
+                const parent = _.find(parents, {author_permlink: obj.parent}) as Wobject | undefined;
+                const parentInfo = await this.getParentInfo({
                     locale,
                     app,
                     parent: parent as Wobject,
                 });
+                obj.parent = typeof parentInfo === 'string' ? parentInfo : '';
             }
             if (obj.productId && obj.object_type !== OBJECT_TYPES.PERSON && affiliateCodes.length) {
                 obj.affiliateLinks = makeAffiliateLinks({
@@ -994,6 +1029,7 @@ export class ObjectProcessor {
                 obj.authority,
                 (a: Field) => a.creator === reqUserName && a.body === 'administrative',
             );
+            // @ts-ignore
             if (!hiveData) obj = _.omit(obj, ['fields', 'latest_posts', 'last_posts_counts_by_hours', 'tagCategories', 'children']);
             if (_.has(obj, FIELDS_NAMES.TAG_CATEGORY)) obj.topTags = this.getTopTags(obj, topTagsLimit);
             filteredWobj.push(obj);

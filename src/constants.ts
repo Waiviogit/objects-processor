@@ -143,12 +143,11 @@ export const ARRAY_FIELDS = [
 
 export const MIN_PERCENT_TO_SHOW_UPDATE = 70;
 
-
-export const categorySwitcher = {
+export const categorySwitcher: Record<string, string> = {
     galleryAlbum: FIELDS_NAMES.GALLERY_ITEM,
     galleryItem: FIELDS_NAMES.GALLERY_ITEM,
     tagCategory: FIELDS_NAMES.CATEGORY_ITEM,
-}
+};
 
 export const INDEPENDENT_FIELDS = [
     FIELDS_NAMES.STATUS,
@@ -229,7 +228,6 @@ export const OBJECT_TYPES = {
     RECIPE: 'recipe',
     GROUP: 'group',
 };
-
 
 export const REQUIREDFIELDS_PARENT = [
     FIELDS_NAMES.NAME,
