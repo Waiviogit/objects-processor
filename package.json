@@ -1,5 +1,5 @@
 {
-  "name": "object-processor",
+  "name": "@waivio/objects-processor",
   "version": "1.0.0",
   "description": "Object processing utility library",
   "type": "module",
@@ -24,8 +24,8 @@
     "clean": "rimraf dist"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "fesmofet",
+  "license": "MIT",
   "devDependencies": {
     "@types/lodash": "^4.17.16",
     "@types/node": "^20.11.24",
