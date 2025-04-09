@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import ObjectProcessor from '../index';
 import { Wobject, Field, App, ActiveVote } from '../interfaces';
-import { VOTE_STATUSES, ADMIN_ROLES, FIELDS_NAMES, OBJECT_TYPES } from '../constants';
+import { VOTE_STATUSES, ADMIN_ROLES, FIELDS_NAMES, OBJECT_TYPES } from '../constatns/constants';
 
 // Mock ObjectId
 class MockObjectId {
@@ -83,7 +83,7 @@ describe('ObjectProcessor', () => {
     it('should count exposed fields correctly', () => {
       const mockId = new MockObjectId();
       const fields: Partial<Field>[] = [
-        { 
+        {
           name: 'description',
           body: 'test',
           locale: 'en-US',
@@ -94,7 +94,7 @@ describe('ObjectProcessor', () => {
           permlink: 'permlink',
           active_votes: []
         },
-        { 
+        {
           name: 'description',
           body: 'test2',
           locale: 'en-US',
@@ -105,7 +105,7 @@ describe('ObjectProcessor', () => {
           permlink: 'permlink',
           active_votes: []
         },
-        { 
+        {
           name: 'title',
           body: 'test title',
           locale: 'en-US',
@@ -439,4 +439,4 @@ describe('ObjectProcessor', () => {
       expect(result).toEqual(['tag3', 'tag1']);
     });
   });
-}); 
+});

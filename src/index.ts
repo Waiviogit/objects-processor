@@ -10,11 +10,11 @@ import {
     INDEPENDENT_FIELDS,
     LANGUAGES_POPULARITY,
     FULL_SINGLE_FIELDS, OBJECT_TYPES, REQUIREDFIELDS_PARENT, LIST_TYPES,
-} from "./constants";
+} from "./constatns/general";
 import * as _ from "lodash";
 import {jsonHelper} from "./helpers";
 import {makeAffiliateLinks} from "./makeAffiliateLinks";
-import {EXPOSED_FIELDS_FOR_OBJECT_TYPE} from "./exposedFields";
+import {EXPOSED_FIELDS_FOR_OBJECT_TYPE} from "./constatns/exposedFields";
 
 
 export interface FindParentsByPermlinkFn {

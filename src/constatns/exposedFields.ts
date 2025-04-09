@@ -1,4 +1,4 @@
-import {FIELDS_NAMES} from "./constants";
+import {FIELDS_NAMES} from "./general";
 
 
 const MAIN_FIELDS = [

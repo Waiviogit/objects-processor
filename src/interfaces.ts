@@ -1,5 +1,3 @@
-import {s} from "vitest/dist/reporters-w_64AS5f";
-
 export interface App {
     owner?: string
     admins?: string[]

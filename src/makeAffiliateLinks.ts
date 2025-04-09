@@ -1,8 +1,7 @@
-import {AFFILIATE_NULL_TYPES, COUNTRY_TO_CONTINENT, GLOBAL_GEOGRAPHY} from "./affiliateData";
+import {AFFILIATE_NULL_TYPES, COUNTRY_TO_CONTINENT, GLOBAL_GEOGRAPHY} from "./constatns/affiliateData";
 import {jsonHelper} from "./helpers";
 import * as _ from "lodash";
 import {AffiliateCodes, AffiliateLink, Field} from "./interfaces";
-
 
 export interface MakeAffiliateLinks {
     countryCode: string
