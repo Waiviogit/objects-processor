@@ -1,6 +1,6 @@
 {
   "name": "@waivio/objects-processor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Object processing utility library",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -26,6 +26,10 @@
   "keywords": [],
   "author": "fesmofet",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Waiviogit/objects-processor.git"
+  },
   "devDependencies": {
     "@types/lodash": "^4.17.16",
     "@types/node": "^20.11.24",
