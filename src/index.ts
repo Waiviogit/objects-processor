@@ -9,7 +9,10 @@ import {
     categorySwitcher,
     INDEPENDENT_FIELDS,
     LANGUAGES_POPULARITY,
-    FULL_SINGLE_FIELDS, OBJECT_TYPES, REQUIREDFIELDS_PARENT, LIST_TYPES,
+    FULL_SINGLE_FIELDS,
+    OBJECT_TYPES,
+    REQUIREDFIELDS_PARENT,
+    LIST_TYPES,
 } from "./constatns/general";
 import * as _ from "lodash";
 import {jsonHelper} from "./helpers";
@@ -1042,3 +1045,14 @@ export class ObjectProcessor {
 }
 
 export default ObjectProcessor;
+export {
+    FIELDS_NAMES ,
+    OBJECT_TYPES,
+    ARRAY_FIELDS,
+    REQUIREDFIELDS_PARENT,
+    LIST_TYPES,
+} from './constatns/general';
+export {
+    EXPOSED_FIELDS_FOR_OBJECT_TYPE,
+    SUPPOSED_UPDATES_BY_TYPE,
+} from './constatns/exposedFields'

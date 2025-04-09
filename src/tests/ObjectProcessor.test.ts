@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import ObjectProcessor from '../index';
 import { Wobject, Field, App, ActiveVote } from '../interfaces';
-import { VOTE_STATUSES, ADMIN_ROLES, FIELDS_NAMES, OBJECT_TYPES } from '../constatns/constants';
+import { VOTE_STATUSES, ADMIN_ROLES, FIELDS_NAMES, OBJECT_TYPES } from '../constatns/general';
 
 // Mock ObjectId
 class MockObjectId {
