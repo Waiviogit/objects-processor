@@ -3,32 +3,26 @@ name: Publish Package
 on:
   release:
     types: [created]
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to publish (e.g., 1.0.1)'
-        required: true
-        type: string
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
-
+          
       - name: Install dependencies
-        run: npm i --no-audit --no-fund
-
+        run: npm i
+        
       - name: Build
         run: npm run build
-
+        
       - name: Publish to npm
         run: npm publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} 

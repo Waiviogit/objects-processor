@@ -513,7 +513,8 @@ export class ObjectProcessor {
             return 0;
         }) || 0;
         if (!rejectsWeight) return 100;
-        const percent = _.round((approvesWeight / (approvesWeight + rejectsWeight)) * 100, 3);
+        const totalWeight = approvesWeight + Math.abs(rejectsWeight);
+        const percent = _.round((approvesWeight / totalWeight) * 100, 3);
         return percent > 0 ? percent : 0;
     }
 
@@ -589,7 +590,7 @@ export class ObjectProcessor {
                                 blacklist = [],
                             }: AddDataToFields): Field[] {
         /** Filter, if we need not all fields */
-        if (filter) fields = _.filter(fields, (field) => _.includes(filter, field.name));
+        if (filter?.length) fields = _.filter(fields, (field) => _.includes(filter, field.name));
 
         for (const field of fields) {
             // recount field weight and filter votes if black list not empty
