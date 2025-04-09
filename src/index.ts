@@ -625,7 +625,7 @@ export class ObjectProcessor {
         return processed[FIELDS_NAMES.DELEGATION].map((el) => el.body);
     };
 
-    private findFieldByBody(fields: Field[], body: string) {
+    private findFieldByBody(fields: Field[], body: string): Field {
         return _.find(fields, (f) => f.body === body);
     }
 
@@ -766,6 +766,7 @@ export class ObjectProcessor {
             if (_.find(listItem, (list) => list.type === 'menuList')) {
                 listItem = _.filter(listItem, (list) => list.type === 'menuList');
             }
+
 
             const item = _
                 .chain(listItem)
