@@ -499,7 +499,7 @@ export class ObjectProcessor {
         return exposedFieldsWithCounters;
     }
 
-    private calculateApprovePercent(field: Field): number {
+    calculateApprovePercent(field: Field): number {
         if (field.adminVote) return field.adminVote.status === VOTE_STATUSES.APPROVED ? 100 : 0;
         if (field.weight <= 0) return 0;
 
@@ -582,7 +582,7 @@ export class ObjectProcessor {
         return {owner, admins};
     }
 
-    private addDataToFields({
+    addDataToFields({
                                 fields,
                                 filter,
                                 admins,
@@ -655,7 +655,7 @@ export class ObjectProcessor {
         return processed[FIELDS_NAMES.DELEGATION].map((el) => el.body);
     }
 
-    private findFieldByBody(fields: Field[], body: string): Field | undefined {
+    findFieldByBody(fields: Field[], body: string): Field | undefined {
         return _.find(fields, (f) => f.body === body);
     }
 
