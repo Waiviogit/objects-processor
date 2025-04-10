@@ -73,6 +73,16 @@ interface AddAdminVote {
     isOwnershipObj: boolean
 }
 
+interface GetObjectAdminsOwnershipAndAdministrative {
+    app: App
+    obj: Wobject
+    admins: string[]
+    owner: string
+    blacklist: string[]
+    objectControl: boolean
+    extraAuthority: string
+}
+
 interface ArrayFieldFilter {
     idFields: Field[]
     allFields: Record<string, Field[]>
@@ -170,6 +180,7 @@ export class ObjectProcessor {
         this.getDefaultLink = this.getDefaultLink.bind(this);
         this.getLinkToPageLoad = this.getLinkToPageLoad.bind(this);
         this.getTopTags = this.getTopTags.bind(this);
+        this.getObjectAdminsOwnershipAndAdministrative = this.getObjectAdminsOwnershipAndAdministrative.bind(this);
     }
 
     private arrayFieldPush({filter = [], field}: ArrayFieldPush) {
@@ -871,6 +882,63 @@ export class ObjectProcessor {
             .value();
     };
 
+    private getObjectAdminsOwnershipAndAdministrative({app, obj, admins, owner, blacklist, objectControl, extraAuthority}: GetObjectAdminsOwnershipAndAdministrative): {ownership: string[], administrative: string[], objectAdmins: string[]} {
+        // Get base ownership and administrative arrays from intersection of obj and app authorities
+        const baseOwnership = _.intersection(
+            _.get(obj, 'authority.ownership', [] as string[]),
+            _.get(app, 'authority', [] as string[])
+        );
+
+        const baseAdministrative = _.intersection(
+            _.get(obj, 'authority.administrative', [] as string[]),
+            _.get(app, 'authority', [] as string[])
+        );
+
+        // Get trusted users from intersection with app.trustedAll
+        const trustedOwnership = _.intersection(
+            _.get(obj, 'authority.ownership', [] as string[]),
+            _.get(app, 'trustedAll', [])
+        );
+
+        const trustedAdministrative = _.intersection(
+            _.get(obj, 'authority.administrative', [] as string[]),
+            _.get(app, 'trustedAll', [])
+        );
+
+        // Combine base and trusted arrays, ensuring no duplicates
+        const ownership = _.uniq([...baseOwnership, ...trustedOwnership]);
+        const administrative = _.uniq([...baseAdministrative, ...trustedAdministrative]);
+
+        // Get admins that can be assigned by owner or other admins
+        const assignedAdmins = this.getAssignedAdmins({
+            admins,
+            ownership,
+            administrative,
+            owner,
+            blacklist,
+            object: obj,
+        });
+
+        // Combine all admin types, ensuring no duplicates
+        const objectAdmins = _.uniq([...admins, ...assignedAdmins, ...trustedOwnership, ...trustedAdministrative]);
+
+        // Handle objectControl and extraAuthority logic
+        if (objectControl && (
+            !_.isEmpty(administrative) ||
+            !_.isEmpty(ownership) ||
+            (extraAuthority && _.get(obj, 'authority.administrative', [] as string[]).includes(extraAuthority)) ||
+            (extraAuthority && _.get(obj, 'authority.ownership', [] as string[]).includes(extraAuthority))
+        )) {
+            if (extraAuthority) {
+                // Add extraAuthority and objectAdmins to ownership, ensuring no duplicates
+                ownership.push(..._.uniq([extraAuthority, ...objectAdmins]));
+            }
+        }
+
+        return {ownership, administrative, objectAdmins};
+    }
+
+
 
     async processWobjects({
                               wobjects,
@@ -907,8 +975,8 @@ export class ObjectProcessor {
         const objectControl = !!app?.objectControl;
         const userShop = app?.configuration?.shopSettings?.type === SHOP_SETTINGS_TYPE.USER;
         const extraAuthority = userShop
-            ? app?.configuration?.shopSettings?.value
-            : app?.owner;
+            ? app?.configuration?.shopSettings?.value || ''
+            : app?.owner || '';
 
         for (let obj of wobjects) {
             let exposedFields: ExposedFieldCounter[] = [];
@@ -916,26 +984,7 @@ export class ObjectProcessor {
             if (obj.newsFilter) obj = _.omit(obj, ['newsFilter']);
 
             /** Get app admins, wobj administrators, which was approved by app owner(creator) */
-            const ownership = _.intersection(_.get(obj, 'authority.ownership', [] as string[]), _.get(app, 'authority', [] as string[]));
-            const administrative = _.intersection(_.get(obj, 'authority.administrative', [] as string[]), _.get(app, 'authority', [] as string[]));
-
-            // get admins that can be assigned by owner or other admins
-            const assignedAdmins = this.getAssignedAdmins({
-                admins, ownership, administrative, owner, blacklist, object: obj,
-            });
-            const objectAdmins = [...admins, ...assignedAdmins];
-
-            if (objectControl
-                && (!_.isEmpty(administrative)
-                    || !_.isEmpty(ownership)
-                    || (extraAuthority && _.get(obj, 'authority.administrative', [] as string[]).includes(extraAuthority))
-                    || (extraAuthority && _.get(obj, 'authority.ownership', [] as string[]).includes(extraAuthority))
-                )
-            ) {
-                if (extraAuthority) {
-                    ownership.push(extraAuthority, ...objectAdmins);
-                }
-            }
+           const {ownership, administrative, objectAdmins} = this.getObjectAdminsOwnershipAndAdministrative({app, obj, admins, owner, blacklist, objectControl, extraAuthority})
 
             /** If flag hiveData exists - fill in wobj fields with hive data */
             if (hiveData) exposedFields = this.getExposedFields(obj.object_type, obj.fields);

@@ -1,6 +1,8 @@
 export interface App {
     owner?: string
     admins?: string[]
+    authority?: string[]
+    trustedAll?: string[]
     objectControl?: boolean
     configuration?: {
         shopSettings?: {
