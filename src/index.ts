@@ -253,6 +253,7 @@ export class ObjectProcessor {
                 case FIELDS_NAMES.PIN:
                 case FIELDS_NAMES.MENU_ITEM:
                 case FIELDS_NAMES.ADD_ON:
+                case FIELDS_NAMES.FEATURED:
                 case FIELDS_NAMES.RELATED:
                 case FIELDS_NAMES.SIMILAR:
                 case FIELDS_NAMES.WALLET_ADDRESS:
@@ -738,7 +739,7 @@ export class ObjectProcessor {
         }, []);
 
         return this.groupOptions(options);
-    };
+    }
 
 
     async getParentInfo({
@@ -758,7 +759,7 @@ export class ObjectProcessor {
             app,
         });
 
-    };
+    }
 
     getLinkFromMenuItem(mainObjectPermlink: string, menu: Field): string {
         const defaultLink = `/object/${mainObjectPermlink}`;
@@ -776,7 +777,7 @@ export class ObjectProcessor {
         const linkEnding = links[body.objectType] || links.default;
 
         return `${defaultLink}${linkEnding}`;
-    };
+    }
 
     getCustomSortLink(obj: Wobject): string {
         if (obj.object_type === OBJECT_TYPES.LIST) return `/object/${obj.author_permlink}/list`;
@@ -795,7 +796,7 @@ export class ObjectProcessor {
         if (news) return `/object/${obj.author_permlink}/newsFilter/${news.permlink}`;
 
         return defaultLink;
-    };
+    }
 
 
     getDefaultLink(obj: Wobject) {
@@ -880,7 +881,7 @@ export class ObjectProcessor {
             .slice(0, limit)
             .map('body')
             .value();
-    };
+    }
 
     private getObjectAdminsOwnershipAndAdministrative({app, obj, admins, owner, blacklist, objectControl, extraAuthority}: GetObjectAdminsOwnershipAndAdministrative): {ownership: string[], administrative: string[], objectAdmins: string[]} {
         // Get base ownership and administrative arrays from intersection of obj and app authorities
