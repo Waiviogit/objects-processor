@@ -823,7 +823,7 @@ export class ObjectProcessor {
         if (_.get(obj, 'blog', []).length) return `/object/${obj.author_permlink}/blog/@${obj?.blog?.[0].body}`;
 
         return defaultLink;
-    };
+    }
 
 
     getLinkToPageLoad(obj: Wobject, mobile?: boolean) {
@@ -863,7 +863,7 @@ export class ObjectProcessor {
             default:
                 return `/object/${obj.author_permlink}`;
         }
-    };
+    }
 
 
     getTopTags(obj: Wobject, limit = 2): string [] {
@@ -1070,6 +1070,7 @@ export class ObjectProcessor {
                     affiliateCodes,
                     productIds: obj.productId,
                     countryCode,
+                    objectType: obj.object_type,
                 });
             }
             if (obj.departments && typeof obj.departments[0] === 'string') {

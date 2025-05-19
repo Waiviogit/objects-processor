@@ -2,16 +2,19 @@ import {AFFILIATE_NULL_TYPES, COUNTRY_TO_CONTINENT, GLOBAL_GEOGRAPHY} from "./co
 import {jsonHelper} from "./helpers";
 import * as _ from "lodash";
 import {AffiliateCodes, AffiliateLink, Field} from "./interfaces";
+import {OBJECT_TYPES} from "./constatns/general";
 
 export interface MakeAffiliateLinks {
     countryCode: string
     affiliateCodes: AffiliateCodes[],
     productIds: Field[]
+    objectType: string
 }
 
 interface FilterByIdType {
     affiliateCodes: AffiliateCodes[],
     countryCode: string
+    objectType: string
 }
 
 
@@ -137,7 +140,8 @@ const chooseOneFromSimilar = ({similar, countryCode}: ChooseOneFromSimilar) => {
 };
 
 
-const filterByIdType = ({affiliateCodes, countryCode}: FilterByIdType) => {
+const filterByIdType = ({affiliateCodes, countryCode, objectType}: FilterByIdType) => {
+    if(objectType === OBJECT_TYPES.RECIPE) return affiliateCodes;
     const filtered = [];
     const alreadyUsed: AffiliateCodes[] = [];
 
@@ -159,7 +163,8 @@ const filterByIdType = ({affiliateCodes, countryCode}: FilterByIdType) => {
 export const makeAffiliateLinks = ({
                                        productIds = [],
                                        affiliateCodes = [],
-                                       countryCode
+                                       countryCode,
+                                       objectType,
                                    }: MakeAffiliateLinks): AffiliateLink[] => {
     const links = [];
     const usedAffiliate: AffiliateCodes[] = [];
@@ -205,28 +210,31 @@ export const makeAffiliateLinks = ({
                 (nullAff) => _.isEqual(nullAff, aff),
             ));
     }
-
-    affiliateCodes = filterByIdType({affiliateCodes, countryCode});
+    affiliateCodes = filterByIdType({affiliateCodes, countryCode, objectType});
 
     const createdLinks = mappedProductIds.reduce((acc, el) => {
         const affiliate = affiliateCodes
-            .find((a) => a.affiliateProductIdTypes.includes(el.productIdType.toLocaleLowerCase()));
-        if (!affiliate) return acc;
-        if (usedAffiliate.some((used) => _.isEqual(used, affiliate))) return acc;
-        usedAffiliate.push(affiliate);
-        const affiliateCode = getAffiliateCode(affiliate.affiliateCode);
-        if (!affiliateCode) return acc;
+            .filter((a) => a.affiliateProductIdTypes.includes(el.productIdType.toLocaleLowerCase()));
+        if (!affiliate?.length) return acc;
+        for (const affiliateCodeEl of affiliate) {
+            if (usedAffiliate.some((used) => _.isEqual(used, affiliateCodeEl))) continue;
 
-        const link = affiliate.affiliateUrlTemplate
-            .replace('$productId', el.productId)
-            .replace('$affiliateCode', affiliateCode);
+            if(objectType !== OBJECT_TYPES.RECIPE)  usedAffiliate.push(affiliateCodeEl);
+            const affiliateCode = getAffiliateCode(affiliateCodeEl.affiliateCode);
+            if (!affiliateCode) continue;
 
-        acc.push({
-            link,
-            image: affiliate.affiliateButton,
-            affiliateCode,
-            type: el.productIdType,
-        });
+            const link = affiliateCodeEl.affiliateUrlTemplate
+                .replace('$productId', el.productId)
+                .replace('$affiliateCode', affiliateCode);
+
+            acc.push({
+                link,
+                image: affiliateCodeEl.affiliateButton,
+                affiliateCode,
+                type: el.productIdType,
+            });
+        }
+
         return acc;
     }, [] as AffiliateLink[]);
 

@@ -27,7 +27,8 @@ describe('makeAffiliateLinks', () => {
     const result = makeAffiliateLinks({
       countryCode: 'US',
       productIds: [],
-      affiliateCodes: []
+      affiliateCodes: [],
+      objectType: 'product'
     });
     expect(result).toEqual([]);
   });
@@ -36,7 +37,8 @@ describe('makeAffiliateLinks', () => {
     const result = makeAffiliateLinks({
       countryCode: 'US',
       productIds: [mockField],
-      affiliateCodes: [mockAffiliateCode]
+      affiliateCodes: [mockAffiliateCode],
+      objectType: 'product'
     });
 
     expect(result).toHaveLength(1);
@@ -57,7 +59,8 @@ describe('makeAffiliateLinks', () => {
     const result = makeAffiliateLinks({
       countryCode: 'US',
       productIds: [mockField, mockField2],
-      affiliateCodes: [mockAffiliateCode]
+      affiliateCodes: [mockAffiliateCode],
+      objectType: 'product'
     });
 
     expect(result).toHaveLength(1);
@@ -73,7 +76,8 @@ describe('makeAffiliateLinks', () => {
     const result = makeAffiliateLinks({
       countryCode: 'US',
       productIds: [mockField],
-      affiliateCodes: [weightedAffiliateCode]
+      affiliateCodes: [weightedAffiliateCode],
+      objectType: 'product'
     });
 
     expect(result).toHaveLength(1);
@@ -89,7 +93,8 @@ describe('makeAffiliateLinks', () => {
     const result = makeAffiliateLinks({
       countryCode: 'FR', // Non-US country
       productIds: [mockField],
-      affiliateCodes: [globalAffiliateCode]
+      affiliateCodes: [globalAffiliateCode],
+      objectType: 'product'
     });
 
     expect(result).toHaveLength(1);
@@ -105,7 +110,8 @@ describe('makeAffiliateLinks', () => {
     const result = makeAffiliateLinks({
       countryCode: 'US',
       productIds: [nullField],
-      affiliateCodes: [mockAffiliateCode]
+      affiliateCodes: [mockAffiliateCode],
+      objectType: 'product'
     });
 
     expect(result).toHaveLength(0);
@@ -128,10 +134,58 @@ describe('makeAffiliateLinks', () => {
     const result = makeAffiliateLinks({
       countryCode: 'US',
       productIds: [mockField, ebayField],
-      affiliateCodes: [mockAffiliateCode, ebayAffiliateCode]
+      affiliateCodes: [mockAffiliateCode, ebayAffiliateCode],
+      objectType: 'product'
     });
 
     expect(result).toHaveLength(2);
     expect(result.map(r => r.type)).toEqual(expect.arrayContaining(['amazon', 'ebay']));
   });
-}); 
+
+  it('should handle recipe with multiple programs o n single id', () => {
+
+    const affiliateCodes = [
+      {
+        "affiliateButton": "https://waivio.nyc3.digitaloceanspaces.com/039eea77dea49c5efb565bee0b3bc50830d735dfb7b4be2d6ce3d93eb54ad35d",
+        "affiliateUrlTemplate": "https://didicherednyk.live/@wiv01/$productId/$affiliateCode",
+        "affiliateCode": [
+          "wiv.socialgifts.pp.ua",
+          "09907908xcvxcv"
+        ],
+        "affiliateGeoArea": [
+          "GLOBAL"
+        ],
+        "affiliateProductIdTypes": [
+          "instacart"
+        ]
+      },
+      {
+        "affiliateButton": "https://waivio.nyc3.digitaloceanspaces.com/d3e4a109d65e08b8844b70dd18077f39bcd68c80472c8990c5154124e07f2b60",
+        "affiliateUrlTemplate": "https://didicherednyk.live/@new-way/$productId/$affiliateCode",
+        "affiliateCode": [
+          "wiv.socialgifts.pp.ua",
+          "98789xcvjkh4523s"
+        ],
+        "affiliateGeoArea": [
+          "GLOBAL"
+        ],
+        "affiliateProductIdTypes": [
+          "instacart"
+        ]
+      }
+    ];
+    const instacartField: Field = {
+      ...mockField,
+      body: JSON.stringify({ productId: '789', productIdType: 'instacart' })
+    };
+
+    const result = makeAffiliateLinks({
+      countryCode: 'US',
+      productIds: [instacartField],
+      affiliateCodes,
+      objectType: 'recipe'
+    });
+
+    expect(result).toHaveLength(2);
+  })
+});
