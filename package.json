@@ -1,6 +1,6 @@
 {
   "name": "@waivio/objects-processor",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Object processing utility library",
   "type": "module",
   "main": "./dist/index.cjs",
