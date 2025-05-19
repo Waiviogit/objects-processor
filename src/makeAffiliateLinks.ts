@@ -183,7 +183,7 @@ export const makeAffiliateLinks = ({
                 && !AFFILIATE_NULL_TYPES.includes(p.productId)),
     );
 
-    if (exactMatched.length) {
+    if (exactMatched.length && objectType !== OBJECT_TYPES.RECIPE) {
         const ids = mappedProductIds
             .filter((el) => exactMatched
                 .some((aff) => aff.affiliateUrlTemplate.includes(el.productIdType)

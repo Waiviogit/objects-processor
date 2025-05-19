@@ -188,4 +188,52 @@ describe('makeAffiliateLinks', () => {
 
     expect(result).toHaveLength(2);
   })
+
+  it('should handle recipe with multiple programs o n single id with exac match.com', () => {
+
+    const affiliateCodes = [
+      {
+        "affiliateButton": "https://waivio.nyc3.digitaloceanspaces.com/63cee90c82e6330b351760d9eac3ac22f080c167717c59fe1d34cf370608dc0a",
+        "affiliateUrlTemplate": "https://www.instacart.com/products/$productId?aff_id=$affiliateCode",
+        "affiliateCode": [
+          "123.socialgifts.pp.ua",
+          "876987sdfsdf987"
+        ],
+        "affiliateGeoArea": [
+          "GLOBAL"
+        ],
+        "affiliateProductIdTypes": [
+          "instacart",
+          "instacart.com"
+        ]
+      },
+      {
+        "affiliateButton": "https://waivio.nyc3.digitaloceanspaces.com/8b9fc21c95f7ac642b28d9bd1aaa0f40deb336301ae46093d4b69d1ffb240a24",
+        "affiliateUrlTemplate": "https://www.instacart-impact.com/products/$productId?aff_id=$affiliateCode",
+        "affiliateCode": [
+          "123.socialgifts.pp.ua",
+          "98712983"
+        ],
+        "affiliateGeoArea": [
+          "GLOBAL"
+        ],
+        "affiliateProductIdTypes": [
+          "instacart"
+        ]
+      }
+    ]
+    const instacartField: Field = {
+      ...mockField,
+      body: JSON.stringify({ productId: '789', productIdType: 'instacart' })
+    };
+
+    const result = makeAffiliateLinks({
+      countryCode: 'US',
+      productIds: [instacartField],
+      affiliateCodes,
+      objectType: 'recipe'
+    });
+
+    expect(result).toHaveLength(2);
+  })
 });
