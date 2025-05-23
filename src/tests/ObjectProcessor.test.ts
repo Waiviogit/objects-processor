@@ -75,6 +75,7 @@ describe('ObjectProcessor', () => {
       });
 
       expect(result).toHaveLength(1);
+      // @ts-ignore
       expect(result[0]).toHaveProperty('author_permlink', 'test-permlink');
     });
   });
@@ -314,6 +315,100 @@ describe('ObjectProcessor', () => {
       expect(result[0].active_votes).toHaveLength(1);
       expect(result[0].active_votes[0].voter).toBe('user1');
       expect(result[0].weight).toBe(3); // 2 (weight) + 1 (weightWAIV)
+    });
+
+    it('should filter out sale fields before startDate', () => {
+      const mockId = new MockObjectId();
+      const now = Date.now();
+      const fields: Partial<Field>[] = [{
+        name: FIELDS_NAMES.SALE,
+        body: 'test sale',
+        locale: 'en-US',
+        _id: mockId,
+        weight: 1,
+        creator: 'creator',
+        author: 'author',
+        permlink: 'permlink',
+        active_votes: [],
+        startDate: now + 1000, // 1 second in future
+        endDate: now + 2000
+      }];
+
+      const result = processor['addDataToFields']({
+        fields: fields as Field[],
+        filter: [],
+        admins: [],
+        ownership: [],
+        administrative: [],
+        owner: 'owner',
+        isOwnershipObj: false,
+        blacklist: []
+      });
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should filter out promotion fields after endDate', () => {
+      const mockId = new MockObjectId();
+      const now = Date.now();
+      const fields: Partial<Field>[] = [{
+        name: FIELDS_NAMES.PROMOTION,
+        body: 'test promotion',
+        locale: 'en-US',
+        _id: mockId,
+        weight: 1,
+        creator: 'creator',
+        author: 'author',
+        permlink: 'permlink',
+        active_votes: [],
+        startDate: now - 2000,
+        endDate: now - 1000 // 1 second in past
+      }];
+
+      const result = processor['addDataToFields']({
+        fields: fields as Field[],
+        filter: [],
+        admins: [],
+        ownership: [],
+        administrative: [],
+        owner: 'owner',
+        isOwnershipObj: false,
+        blacklist: []
+      });
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should include sale fields within date range', () => {
+      const mockId = new MockObjectId();
+      const now = Date.now();
+      const fields: Partial<Field>[] = [{
+        name: FIELDS_NAMES.SALE,
+        body: 'test sale',
+        locale: 'en-US',
+        _id: mockId,
+        weight: 1,
+        creator: 'creator',
+        author: 'author',
+        permlink: 'permlink',
+        active_votes: [],
+        startDate: now - 1000, // 1 second in past
+        endDate: now + 1000 // 1 second in future
+      }];
+
+      const result = processor['addDataToFields']({
+        fields: fields as Field[],
+        filter: [],
+        admins: [],
+        ownership: [],
+        administrative: [],
+        owner: 'owner',
+        isOwnershipObj: false,
+        blacklist: []
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe(FIELDS_NAMES.SALE);
     });
   });
 

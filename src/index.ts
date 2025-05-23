@@ -180,6 +180,7 @@ export class ObjectProcessor {
         this.getDefaultLink = this.getDefaultLink.bind(this);
         this.getLinkToPageLoad = this.getLinkToPageLoad.bind(this);
         this.getTopTags = this.getTopTags.bind(this);
+        this.calculateWeights = this.calculateWeights.bind(this);
         this.getObjectAdminsOwnershipAndAdministrative = this.getObjectAdminsOwnershipAndAdministrative.bind(this);
     }
 
@@ -594,6 +595,13 @@ export class ObjectProcessor {
         return {owner, admins};
     }
 
+    private calculateWeights  (votes: ActiveVote[]) {
+        return votes.reduce((acc, vote) => ({
+            hive: acc.hive + (vote.weight || 0),
+            waiv: acc.waiv + (vote.weightWAIV || 0)
+        }), { hive: 0, waiv: 0 });
+    }
+
     addDataToFields({
         fields,
         filter = [],
@@ -610,14 +618,14 @@ export class ObjectProcessor {
         }
 
         const hasBlacklist = !_.isEmpty(blacklist);
-        const calculateWeights = (votes: ActiveVote[]) => {
-            return votes.reduce((acc, vote) => ({
-                hive: acc.hive + (vote.weight || 0),
-                waiv: acc.waiv + (vote.weightWAIV || 0)
-            }), { hive: 0, waiv: 0 });
-        };
-
-        return fields.map(field => {
+        const now = Date.now();
+        return fields.reduce<Field[]>((acc, field) => {
+            // Skip sale, promotion fields that are not active
+            if ([FIELDS_NAMES.SALE, FIELDS_NAMES.PROMOTION].includes(field.name)) {
+               if (now < (field?.startDate || 0) || now > (field?.endDate|| 0)) {
+                   return acc;
+               }
+            }
             // Add WAIV weight
             field.weight += (field?.weightWAIV ?? 0);
 
@@ -628,7 +636,7 @@ export class ObjectProcessor {
                 field.active_votes.some(v => blacklist.includes(v.voter))) {
 
                 field.active_votes = field.active_votes.filter(v => !blacklist.includes(v.voter));
-                const weights = calculateWeights(field.active_votes);
+                const weights = this.calculateWeights(field.active_votes);
                 field.weight = weights.hive + weights.waiv;
             }
 
@@ -653,8 +661,9 @@ export class ObjectProcessor {
 
             field.approvePercent = this.calculateApprovePercent(field);
 
-            return field;
-        });
+            acc.push(field);
+            return acc;
+        }, []);
     }
 
     private getAssignedAdmins({
