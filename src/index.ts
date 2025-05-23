@@ -595,41 +595,66 @@ export class ObjectProcessor {
     }
 
     addDataToFields({
-                                fields,
-                                filter,
-                                admins,
-                                ownership,
-                                administrative,
-                                isOwnershipObj,
-                                owner,
-                                blacklist = [],
-                            }: AddDataToFields): Field[] {
-        /** Filter, if we need not all fields */
-        if (filter?.length) fields = _.filter(fields, (field) => _.includes(filter, field.name));
-
-        for (const field of fields) {
-            // recount field weight and filter votes if black list not empty
-            field.weight += (field?.weightWAIV ?? 0);
-            if (
-                !_.isEmpty(blacklist)
-                && !_.isEmpty(field.active_votes)
-                && field.name !== FIELDS_NAMES.AUTHORITY
-                && _.some(field.active_votes, (v) => _.includes(blacklist, v.voter))
-            ) {
-                field.active_votes = _.filter(field.active_votes, (o) => !_.includes(blacklist, o.voter));
-                const weightHive = _.sumBy(field.active_votes, (vote) => vote.weight) || 0;
-                const weightWaiv = _.sumBy(field.active_votes, (vote) => vote.weightWAIV || 0) || 0;
-                field.weight = weightHive + weightWaiv;
-            }
-            if (_.has(field, '_id')) field.createdAt = field._id.getTimestamp().valueOf();
-
-            const adminVote = this.addAdminVote({
-                field, owner, admins, administrative, isOwnershipObj, ownership,
-            });
-            if (adminVote) field.adminVote = adminVote;
-            field.approvePercent = this.calculateApprovePercent(field);
+        fields,
+        filter = [],
+        admins,
+        ownership,
+        administrative,
+        isOwnershipObj,
+        owner,
+        blacklist = [],
+    }: AddDataToFields): Field[] {
+        // Filter fields once at the start
+        if (filter?.length) {
+            fields = fields.filter(field => filter.includes(field.name));
         }
-        return fields;
+
+        const hasBlacklist = !_.isEmpty(blacklist);
+        const calculateWeights = (votes: ActiveVote[]) => {
+            return votes.reduce((acc, vote) => ({
+                hive: acc.hive + (vote.weight || 0),
+                waiv: acc.waiv + (vote.weightWAIV || 0)
+            }), { hive: 0, waiv: 0 });
+        };
+
+        return fields.map(field => {
+            // Add WAIV weight
+            field.weight += (field?.weightWAIV ?? 0);
+
+            // Handle blacklist filtering and weight recalculation
+            if (hasBlacklist &&
+                !_.isEmpty(field.active_votes) &&
+                field.name !== FIELDS_NAMES.AUTHORITY &&
+                field.active_votes.some(v => blacklist.includes(v.voter))) {
+
+                field.active_votes = field.active_votes.filter(v => !blacklist.includes(v.voter));
+                const weights = calculateWeights(field.active_votes);
+                field.weight = weights.hive + weights.waiv;
+            }
+
+            // Set creation timestamp if _id exists
+            if (field._id) {
+                field.createdAt = field._id.getTimestamp().valueOf();
+            }
+
+            // Add admin vote and calculate approval percent
+            const adminVote = this.addAdminVote({
+                field,
+                owner,
+                admins,
+                administrative,
+                isOwnershipObj,
+                ownership,
+            });
+
+            if (adminVote) {
+                field.adminVote = adminVote;
+            }
+
+            field.approvePercent = this.calculateApprovePercent(field);
+
+            return field;
+        });
     }
 
     private getAssignedAdmins({

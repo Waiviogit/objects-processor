@@ -87,6 +87,7 @@ export const FIELDS_NAMES = {
     GROUP_LAST_ACTIVITY: 'groupLastActivity',
     GROUP_MIN_EXPERTISE: 'groupMinExpertise',
     NUTRITION: 'nutrition',
+    SALE: 'sale',
 };
 
 export const SHOP_SETTINGS_TYPE = {

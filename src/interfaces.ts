@@ -57,6 +57,8 @@ export interface Field {
     createdAt?: number;
     adminVote?: AdminVote
     approvePercent?: number
+    startDate?: number
+    endDate?: number
     items?: Field[]
     id?: string
     type?: string
