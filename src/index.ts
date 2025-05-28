@@ -359,7 +359,7 @@ export class ObjectProcessor {
         if (field.locale === 'auto') field.locale = 'en-US';
 
         let result = _.includes(INDEPENDENT_FIELDS, field.name) || locale === field.locale;
-        if (filter) result = result && _.includes(filter, field.name);
+        if (filter?.length) result = result && _.includes(filter, field.name);
         if (ownership?.length) {
             result = (result && _.includes([ADMIN_ROLES.OWNERSHIP, ADMIN_ROLES.ADMIN, ADMIN_ROLES.OWNER, ADMIN_ROLES.MASTER], _.get(field, 'adminVote.role')))
                 || (result && _.includes(ownership, field?.creator));
@@ -369,8 +369,15 @@ export class ObjectProcessor {
 
     private getFilteredFields(fields: Field[], locale: string, filter: string[], ownership: string[]) {
         const fieldsLanguages: { type: string; languages: string[] }[] = [];
+        const now = Date.now();
 
         const fieldTypes = _.reduce(fields, (acc: Record<string, Field[]>, el) => {
+            if ([FIELDS_NAMES.SALE, FIELDS_NAMES.PROMOTION].includes(el.name)) {
+                if ((el?.startDate && el?.endDate) &&  now < (el?.startDate || 0) || now > (el?.endDate|| 0)) {
+                    return acc;
+                }
+            }
+
             const conditionLocale = _.get(el, 'adminVote.status') === VOTE_STATUSES.APPROVED
                 || el.weight > 0;
 
@@ -440,6 +447,9 @@ export class ObjectProcessor {
 
         const groupedFields = _.groupBy(filteredFields, 'name');
         for (const id of Object.keys(groupedFields)) {
+            //here filter by date
+
+
             const approvedFields = _.filter(
                 groupedFields[id],
                 (field) => _.get(field, 'adminVote.status') === VOTE_STATUSES.APPROVED,
@@ -602,6 +612,7 @@ export class ObjectProcessor {
         }), { hive: 0, waiv: 0 });
     }
 
+    //we cant filter here because method used as standalone
     addDataToFields({
         fields,
         filter = [],
@@ -618,14 +629,8 @@ export class ObjectProcessor {
         }
 
         const hasBlacklist = !_.isEmpty(blacklist);
-        const now = Date.now();
-        return fields.reduce<Field[]>((acc, field) => {
-            // Skip sale, promotion fields that are not active
-            if ([FIELDS_NAMES.SALE, FIELDS_NAMES.PROMOTION].includes(field.name)) {
-               if (now < (field?.startDate || 0) || now > (field?.endDate|| 0)) {
-                   return acc;
-               }
-            }
+
+        return fields.map<Field>((field) => {
             // Add WAIV weight
             field.weight += (field?.weightWAIV ?? 0);
 
@@ -661,9 +666,8 @@ export class ObjectProcessor {
 
             field.approvePercent = this.calculateApprovePercent(field);
 
-            acc.push(field);
-            return acc;
-        }, []);
+            return field;
+        });
     }
 
     private getAssignedAdmins({

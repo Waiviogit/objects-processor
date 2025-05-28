@@ -334,16 +334,12 @@ describe('ObjectProcessor', () => {
         endDate: now + 2000
       }];
 
-      const result = processor['addDataToFields']({
-        fields: fields as Field[],
-        filter: [],
-        admins: [],
-        ownership: [],
-        administrative: [],
-        owner: 'owner',
-        isOwnershipObj: false,
-        blacklist: []
-      });
+      const result = processor['getFilteredFields'](
+        fields as Field[],
+        'en-US',
+        [],
+        []
+      );
 
       expect(result).toHaveLength(0);
     });
@@ -365,16 +361,12 @@ describe('ObjectProcessor', () => {
         endDate: now - 1000 // 1 second in past
       }];
 
-      const result = processor['addDataToFields']({
-        fields: fields as Field[],
-        filter: [],
-        admins: [],
-        ownership: [],
-        administrative: [],
-        owner: 'owner',
-        isOwnershipObj: false,
-        blacklist: []
-      });
+      const result = processor['getFilteredFields'](
+        fields as Field[],
+        'en-US',
+        [],
+        []
+      );
 
       expect(result).toHaveLength(0);
     });
@@ -396,16 +388,12 @@ describe('ObjectProcessor', () => {
         endDate: now + 1000 // 1 second in future
       }];
 
-      const result = processor['addDataToFields']({
-        fields: fields as Field[],
-        filter: [],
-        admins: [],
-        ownership: [],
-        administrative: [],
-        owner: 'owner',
-        isOwnershipObj: false,
-        blacklist: []
-      });
+      const result = processor['getFilteredFields'](
+        fields as Field[],
+        'en-US',
+        [], // Add SALE to filter
+        []
+      );
 
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe(FIELDS_NAMES.SALE);
