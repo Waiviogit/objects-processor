@@ -398,7 +398,33 @@ describe('ObjectProcessor', () => {
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe(FIELDS_NAMES.SALE);
     });
+
+    it('should include sale fields without range', () => {
+      const mockId = new MockObjectId();
+      const fields: Partial<Field>[] = [{
+        name: FIELDS_NAMES.SALE,
+        body: 'test sale',
+        locale: 'en-US',
+        _id: mockId,
+        weight: 1,
+        creator: 'creator',
+        author: 'author',
+        permlink: 'permlink',
+        active_votes: [],
+      }];
+
+      const result = processor['getFilteredFields'](
+          fields as Field[],
+          'en-US',
+          [], // Add SALE to filter
+          []
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe(FIELDS_NAMES.SALE);
+    });
   });
+
 
   describe('getLinkToPageLoad', () => {
     it('should return correct link for different object types', () => {

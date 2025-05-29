@@ -373,7 +373,7 @@ export class ObjectProcessor {
 
         const fieldTypes = _.reduce(fields, (acc: Record<string, Field[]>, el) => {
             if ([FIELDS_NAMES.SALE, FIELDS_NAMES.PROMOTION].includes(el.name)) {
-                if ((el?.startDate && el?.endDate) &&  now < (el?.startDate || 0) || now > (el?.endDate|| 0)) {
+                if (!!(el?.startDate && el?.endDate) &&  (now < (el?.startDate || 0) || now > (el?.endDate|| 0))) {
                     return acc;
                 }
             }
