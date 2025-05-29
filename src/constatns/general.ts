@@ -88,6 +88,7 @@ export const FIELDS_NAMES = {
     GROUP_MIN_EXPERTISE: 'groupMinExpertise',
     NUTRITION: 'nutrition',
     SALE: 'sale',
+    COMPARE_AT_PRICE: 'compareAtPrice',
 };
 
 export const SHOP_SETTINGS_TYPE = {
