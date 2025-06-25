@@ -195,7 +195,6 @@ export class ObjectProcessor {
         winningFields[id] = this.getSingleFieldsDisplay(winningField);
 
         if (id === FIELDS_NAMES.DESCRIPTION) {
-            // @ts-ignore
             winningFields.descriptionCreator = winningField.creator;
         }
     }
@@ -713,7 +712,7 @@ export class ObjectProcessor {
         return _.chain(options)
             .map((option) => ({
                 ...option,
-                     // @ts-ignore
+                     // @ts-expect-error - option.body is expected to be a JSON string that needs parsing
                 body: jsonHelper.parseJson(option.body),
                 ...(obj && {
                     author_permlink: obj.author_permlink,
@@ -909,7 +908,7 @@ export class ObjectProcessor {
         if (_.isEmpty(tagCategories)) return [];
         let tags: string[] = [];
         for (const tagCategory of tagCategories) {
-            // @ts-ignore
+            // @ts-expect-error - tagCategory.items is expected to be an array of strings
             tags = _.concat(tags, tagCategory.items);
         }
 
@@ -1040,7 +1039,7 @@ export class ObjectProcessor {
                 blacklist,
             });
             /** Omit map, because wobject has field map, temp solution? maybe field map in wobj not need */
-            // @ts-ignore
+            // @ts-expect-error - obj is being modified by omitting properties
             obj = _.omit(obj, ['map', 'search']);
             obj = {
                 ...obj,
@@ -1070,7 +1069,7 @@ export class ObjectProcessor {
                             blacklist,
                             locale,
                         })
-                             // @ts-ignore
+                             // @ts-expect-error - obj.options is expected to be an array of options
                         : this.groupOptions(obj.options, obj);
                 }
             }
@@ -1086,7 +1085,7 @@ export class ObjectProcessor {
                         blacklist,
                         locale,
                     })
-                         // @ts-ignore
+                         // @ts-expect-error - obj.options is expected to be an array of options
                     : this.groupOptions(obj.options || [], obj);
             }
 
@@ -1117,12 +1116,12 @@ export class ObjectProcessor {
             obj.defaultShowLink = this.getLinkToPageLoad(obj, mobile);
             obj.exposedFields = exposedFields;
 
-            // @ts-ignore
+            // @ts-expect-error - obj.authority is being filtered to find specific authority
             obj.authority = _.find(
                 obj.authority,
                 (a: Field) => a.creator === reqUserName && a.body === 'administrative',
             );
-            // @ts-ignore
+            // @ts-expect-error - obj is being modified by omitting properties
             if (!hiveData) obj = _.omit(obj, ['fields', 'latest_posts', 'last_posts_counts_by_hours', 'tagCategories', 'children']);
             if (_.has(obj, FIELDS_NAMES.TAG_CATEGORY)) obj.topTags = this.getTopTags(obj, topTagsLimit);
             filteredWobj.push(obj);
@@ -1132,6 +1131,19 @@ export class ObjectProcessor {
     }
 
 }
+
+
+export const getTypesForField = (fieldName: string): string[] => {
+    const objectTypes: string[] = [];
+    const exposedFieldsKeys = Object.keys(EXPOSED_FIELDS_FOR_OBJECT_TYPE) as Array<keyof typeof EXPOSED_FIELDS_FOR_OBJECT_TYPE>;
+    
+    for (const type of exposedFieldsKeys) {
+        if (EXPOSED_FIELDS_FOR_OBJECT_TYPE[type].includes(fieldName)) {
+            objectTypes.push(type);
+        }
+    }
+    return objectTypes;
+};
 
 export default ObjectProcessor;
 export {
