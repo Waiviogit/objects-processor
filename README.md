@@ -88,6 +88,21 @@ npm test
 npm run dev
 ```
 
+## Publishing
+
+```bash
+# Publish with patch version bump (1.0.15 → 1.0.16)
+npm run publish:patch
+
+# Publish with minor version bump (1.0.15 → 1.1.0)
+npm run publish:minor
+
+# Publish with major version bump (1.0.15 → 2.0.0)
+npm run publish:major
+```
+
+The publish scripts automatically clean, build, and publish to npm.
+
 ## License
 
 MIT 
