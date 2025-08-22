@@ -1100,7 +1100,8 @@ export class ObjectProcessor {
                     app,
                     parent: parent as Wobject,
                 });
-                obj.parent = typeof parentInfo === 'string' ? parentInfo : '';
+                // @ts-ignore
+                obj.parent =  parentInfo || '';
             }
             if (obj.productId && obj.object_type !== OBJECT_TYPES.PERSON && affiliateCodes.length) {
                 obj.affiliateLinks = makeAffiliateLinks({
@@ -1136,7 +1137,7 @@ export class ObjectProcessor {
 export const getTypesForField = (fieldName: string): string[] => {
     const objectTypes: string[] = [];
     const exposedFieldsKeys = Object.keys(EXPOSED_FIELDS_FOR_OBJECT_TYPE) as Array<keyof typeof EXPOSED_FIELDS_FOR_OBJECT_TYPE>;
-    
+
     for (const type of exposedFieldsKeys) {
         if (EXPOSED_FIELDS_FOR_OBJECT_TYPE[type].includes(fieldName)) {
             objectTypes.push(type);
