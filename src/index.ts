@@ -361,7 +361,9 @@ export class ObjectProcessor {
         if (filter?.length) result = result && _.includes(filter, field.name);
         if (ownership?.length) {
             result = (result && _.includes([ADMIN_ROLES.OWNERSHIP, ADMIN_ROLES.ADMIN, ADMIN_ROLES.OWNER, ADMIN_ROLES.MASTER], _.get(field, 'adminVote.role')))
-                || (result && _.includes(ownership, field?.creator));
+                || (result && _.includes(ownership, field?.creator)
+                || (result && (field.name === FIELDS_NAMES.AUTHORITY && field.body === 'administrative'))
+                );
         }
         return result;
     }
