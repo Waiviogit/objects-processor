@@ -89,6 +89,8 @@ export const FIELDS_NAMES = {
     NUTRITION: 'nutrition',
     SALE: 'sale',
     COMPARE_AT_PRICE: 'compareAtPrice',
+    HTML_CONTENT: 'htmlContent',
+    CONTENT_POSITION: 'contentPosition',
 };
 
 export const SHOP_SETTINGS_TYPE = {
@@ -231,6 +233,7 @@ export const OBJECT_TYPES = {
     LINK: 'link',
     RECIPE: 'recipe',
     GROUP: 'group',
+    HTML: 'html',
 };
 
 export const REQUIREDFIELDS_PARENT = [
