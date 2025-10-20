@@ -91,6 +91,7 @@ export const FIELDS_NAMES = {
     COMPARE_AT_PRICE: 'compareAtPrice',
     HTML_CONTENT: 'htmlContent',
     CONTENT_POSITION: 'contentPosition',
+    CONTENT_VIEW: 'contentView',
 };
 
 export const SHOP_SETTINGS_TYPE = {
