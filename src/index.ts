@@ -259,6 +259,7 @@ export class ObjectProcessor {
                 case FIELDS_NAMES.WALLET_ADDRESS:
                 case FIELDS_NAMES.DELEGATION:
                 case FIELDS_NAMES.PROMOTION:
+                case FIELDS_NAMES.WEBSITE:
                     if (this.arrayFieldPush({
                         filter,
                         field,
@@ -285,15 +286,19 @@ export class ObjectProcessor {
         }
         const result = _.compact(validFields);
 
-        if (id === FIELDS_NAMES.DEPARTMENTS) {
-            if (result.length > 10) {
-                const sorted = _.orderBy(result, ['weight'], ['desc']);
-                return {
-                    result: _.take(sorted, 10),
-                    id,
-                };
-            }
-        }
+		const TOP_LIMIT_BY_FIELD: { [key: string]: number } = {
+			[FIELDS_NAMES.DEPARTMENTS]: 10,
+			[FIELDS_NAMES.WEBSITE]: 3,
+		};
+		const limit = TOP_LIMIT_BY_FIELD[id as unknown as string];
+
+		if (limit && result.length > limit) {
+			const sorted = _.orderBy(result, ['weight'], ['desc']);
+			return {
+				result: _.take(sorted, limit),
+				id,
+			};
+		}
 
         return {
             result,
