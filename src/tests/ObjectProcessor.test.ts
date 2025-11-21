@@ -52,10 +52,396 @@ describe('ObjectProcessor', () => {
     app: ''
   };
 
+  type FixtureActiveVote = Omit<ActiveVote, '_id' | 'timestamp'> & { timestamp?: string };
+
+  const createMockVote = (vote: FixtureActiveVote): ActiveVote => ({
+    voter: vote.voter,
+    weight: vote.weight,
+    percent: vote.percent,
+    rshares_weight: vote.rshares_weight,
+    weightWAIV: vote.weightWAIV,
+    _id: new MockObjectId(
+      vote.timestamp ? new Date(vote.timestamp) : new Date('2024-01-01'),
+    ),
+  });
+
+  type FixtureField = Omit<Field, '_id' | 'active_votes'> & {
+    timestamp?: string
+    active_votes: FixtureActiveVote[]
+  };
+
+  const createMockField = (field: FixtureField): Field => {
+    const { timestamp, active_votes, ...rest } = field;
+
+    return {
+      ...rest,
+      _id: new MockObjectId(
+        timestamp ? new Date(timestamp) : new Date('2024-01-01'),
+      ),
+      active_votes: active_votes.map(createMockVote),
+    };
+  };
+
+  const affiliateFixture = {
+    app: 'waivio/1.0.0',
+    community: '',
+    object_type: 'affiliate',
+    default_name: 'instacart (Impact)',
+    is_posting_open: true,
+    is_extending_open: true,
+    creator: 'wiv01',
+    author: 'xcv47',
+    author_permlink: 'ouh-instacart-impact',
+    weight: 0,
+    parent: '',
+    children: [],
+    map: {
+      type: '',
+      coordinates: [],
+    },
+    latest_posts: [],
+    last_posts_count: 0,
+    activeCampaigns: [],
+    activeCampaignsCount: 0,
+    departments: [],
+    promotedOnSites: [],
+    authority: {
+      administrative: ['wiv01', 'waivio.affiliate'],
+      ownership: ['wiv01', 'waivio.affiliate'],
+    },
+    preview_gallery: [],
+    fields: [
+      {
+        name: FIELDS_NAMES.AFFILIATE_BUTTON,
+        body: 'https://waivio.nyc3.digitaloceanspaces.com/2610f03bee21da34c2318556c0ad3844db985e734ef036a32ff0332703671f96',
+        weight: 920.3014,
+        locale: 'en-US',
+        creator: 'wiv01',
+        author: 'waivio.updates02',
+        permlink: 'wiv01-gpp44otpbfa',
+        active_votes: [
+          {
+            voter: 'wiv01',
+            weight: 0.3014,
+            percent: 44,
+            rshares_weight: 137,
+            weightWAIV: 0.1166,
+          },
+          {
+            voter: 'waivio.affiliate',
+            weight: 920,
+            percent: 10000,
+            rshares_weight: 604,
+            weightWAIV: 618.5,
+          },
+        ],
+        weightWAIV: 618.6166,
+      },
+      {
+        name: FIELDS_NAMES.AFFILIATE_PRODUCT_ID_TYPES,
+        body: 'instacart',
+        weight: 920.3058,
+        locale: 'en-US',
+        creator: 'wiv01',
+        author: 'waivio.updates03',
+        permlink: 'wiv01-8zd6qw7ki6',
+        active_votes: [
+          {
+            voter: 'wiv01',
+            weight: 0.3058,
+            percent: 44,
+            rshares_weight: 137,
+            weightWAIV: 0.1166,
+          },
+          {
+            voter: 'waivio.affiliate',
+            weight: 920,
+            percent: 10000,
+            rshares_weight: 604,
+            weightWAIV: 618.5,
+          },
+        ],
+        weightWAIV: 618.6166,
+      },
+      {
+        name: FIELDS_NAMES.AFFILIATE_PRODUCT_ID_TYPES,
+        body: 'instacart.com',
+        weight: 920.3058,
+        locale: 'en-US',
+        creator: 'wiv01',
+        author: 'waivio.updates04',
+        permlink: 'wiv01-real0hhrrpn',
+        active_votes: [
+          {
+            voter: 'wiv01',
+            weight: 0.3058,
+            percent: 44,
+            rshares_weight: 137,
+            weightWAIV: 0.1166,
+          },
+          {
+            voter: 'waivio.affiliate',
+            weight: 920,
+            percent: 10000,
+            rshares_weight: 604,
+            weightWAIV: 618.5,
+          },
+        ],
+        weightWAIV: 618.6166,
+      },
+      {
+        name: FIELDS_NAMES.AFFILIATE_GEO_AREA,
+        body: 'GLOBAL',
+        weight: 920.3102,
+        locale: 'en-US',
+        creator: 'wiv01',
+        author: 'waivio.updates05',
+        permlink: 'wiv01-g7n772kco87',
+        active_votes: [
+          {
+            voter: 'wiv01',
+            weight: 0.3102,
+            percent: 44,
+            rshares_weight: 137,
+            weightWAIV: 0.1166,
+          },
+          {
+            voter: 'waivio.affiliate',
+            weight: 920,
+            percent: 10000,
+            rshares_weight: 604,
+            weightWAIV: 618.5,
+          },
+        ],
+        weightWAIV: 618.6166,
+      },
+      {
+        name: FIELDS_NAMES.AFFILIATE_URL_TEMPLATE,
+        body: 'https://www.instacart-impact.com/products/$productId?aff_id=$affiliateCode',
+        weight: -4.96815,
+        locale: 'en-US',
+        creator: 'wiv01',
+        author: 'waivio.updates06',
+        permlink: 'wiv01-8ssytzrhhlf',
+        active_votes: [
+          {
+            voter: 'waivio',
+            weight: -1.25045,
+            percent: -89,
+            rshares_weight: 275,
+            weightWAIV: -3.738,
+          },
+          {
+            voter: 'wiv01',
+            weight: -3.7177,
+            percent: -1,
+            rshares_weight: 0,
+            weightWAIV: -3.7178,
+          },
+        ],
+        weightWAIV: -7.4558,
+      },
+      {
+        name: FIELDS_NAMES.AFFILIATE_URL_TEMPLATE,
+        body: 'https://instacart.impact.com/redirect.aspx?&mid=$affiliateCode&u=$productId',
+        weight: -1.6357,
+        locale: 'en-US',
+        creator: 'waivio',
+        author: 'waivio.updates05',
+        permlink: 'waivio-5flgf3adkt2',
+        active_votes: [
+          {
+            voter: 'waivio',
+            weight: -0.6357,
+            percent: -1,
+            rshares_weight: 0,
+          },
+        ],
+        weightWAIV: 1.00055,
+      },
+      {
+        name: FIELDS_NAMES.AFFILIATE_URL_TEMPLATE,
+        body: 'https://instacart.impact.com/redirect.aspx?&mid=$affiliateCode&u=https%3A%2F%2Fwww.instacart.com%2Fproducts%2F$productId',
+        weight: 59821.5,
+        locale: 'en-US',
+        creator: 'waivio',
+        author: 'waivio.updates08',
+        permlink: 'waivio-7ahozxqyhpu',
+        active_votes: [
+          {
+            voter: 'waivio',
+            weight: 1137.5,
+            percent: 2500,
+            rshares_weight: 9090,
+            weightWAIV: 2943.5,
+          },
+          {
+            voter: 'wiv01',
+            weight: 57764,
+            percent: 10000,
+            rshares_weight: 41174,
+            weightWAIV: 46504,
+          },
+          {
+            voter: 'waivio.affiliate',
+            weight: 920,
+            percent: 10000,
+            rshares_weight: 604,
+            weightWAIV: 618.5,
+          },
+        ],
+        weightWAIV: 50066,
+      },
+      {
+        name: FIELDS_NAMES.AUTHORITY,
+        body: 'ownership',
+        weight: 183.0439,
+        locale: 'en-US',
+        creator: 'wiv01',
+        author: 'wiv01',
+        permlink: 'wiv01-ng6tcavanja',
+        active_votes: [
+          {
+            voter: 'wiv01',
+            weight: 183.0439,
+            percent: 338,
+            rshares_weight: 1343,
+            weightWAIV: 170.1154,
+          },
+        ],
+        weightWAIV: 170.1154,
+      },
+      {
+        name: FIELDS_NAMES.AUTHORITY,
+        body: 'administrative',
+        weight: 26285.5,
+        locale: 'en-US',
+        creator: 'wiv01',
+        author: 'w7ngc',
+        permlink: 'wiv01-oaegcukdwxa',
+        active_votes: [
+          {
+            voter: 'wiv01',
+            weight: 26285.5,
+            percent: 10000,
+            rshares_weight: 41161,
+            weightWAIV: 14250,
+          },
+        ],
+        weightWAIV: 14250,
+      },
+      {
+        name: FIELDS_NAMES.AFFILIATE_CODE,
+        body: '["www.waivio.com","test2222"]',
+        weight: 182.945,
+        locale: 'en-US',
+        creator: 'wiv01',
+        author: 'waivio.updates03',
+        permlink: 'wiv01-el62gdeim8t',
+        timestamp: '2024-01-01T00:00:00Z',
+        active_votes: [
+          {
+            voter: 'wiv01',
+            weight: 182.945,
+            percent: 50,
+            rshares_weight: 156,
+            weightWAIV: 182.79,
+            timestamp: '2024-01-01T00:00:00Z',
+          },
+        ],
+        weightWAIV: 182.79,
+      },
+      {
+        name: FIELDS_NAMES.AUTHORITY,
+        body: 'ownership',
+        weight: 1,
+        locale: 'en-US',
+        creator: 'waivio.affiliate',
+        author: 'waivio.updates04',
+        permlink: 'waivioaffiliate-845npx1gd6s',
+        active_votes: [
+          {
+            voter: 'waivio.affiliate',
+            weight: 1,
+            percent: 10000,
+            rshares_weight: 0,
+            weightWAIV: 1.5,
+          },
+        ],
+        weightWAIV: 1.5,
+      },
+      {
+        name: FIELDS_NAMES.AUTHORITY,
+        body: 'administrative',
+        weight: 309.5,
+        locale: 'en-US',
+        creator: 'waivio.affiliate',
+        author: 'waivio.updates05',
+        permlink: 'waivioaffiliate-k5b85bj8xo',
+        active_votes: [
+          {
+            voter: 'waivio.affiliate',
+            weight: 309.5,
+            percent: 10000,
+            rshares_weight: 617,
+            weightWAIV: 1.5,
+          },
+        ],
+        weightWAIV: 1.5,
+      },
+      {
+        name: FIELDS_NAMES.AFFILIATE_CODE,
+        body: '["www.waivio.com","test111111"]',
+        weight: 617.5,
+        locale: 'en-US',
+        creator: 'waivio.affiliate',
+        author: 'waivio.updates09',
+        permlink: 'waivioaffiliate-dc3vzcikf0o',
+        timestamp: '2024-01-02T00:00:00Z',
+        active_votes: [
+          {
+            voter: 'waivio.affiliate',
+            weight: 617.5,
+            percent: 10000,
+            rshares_weight: 617,
+            weightWAIV: 309.5,
+            timestamp: '2024-01-02T00:00:00Z',
+          },
+        ],
+        weightWAIV: 309.5,
+      },
+    ] as FixtureField[],
+  };
+
+  const affiliateWobject = {
+    ...affiliateFixture,
+    map: affiliateFixture.map as unknown as Wobject['map'],
+    fields: affiliateFixture.fields.map(createMockField),
+  } as unknown as Wobject;
+
+  const affiliateApp: App = {
+    owner: 'waivio',
+    admins: [
+      'grampo',
+      'pacificgifts',
+      'daviedining',
+      'citygifts',
+      'vandining',
+      'daine-cherry',
+      'versentry',
+      'sebclem',
+      'antoniokevin',
+      'ahmed365',
+      'thapelo05',
+      'dataoperator',
+    ],
+    authority: ['waivio', 'waivio.affiliate', ]
+  };
+
   describe('processWobjects', () => {
     it('should return empty array for non-array input', async () => {
       const result = await processor.processWobjects({
-        wobjects: null as any,
+        wobjects: null as unknown as Wobject[],
         fields: [],
         app: mockApp as App,
         locale: 'en-US'
@@ -72,11 +458,61 @@ describe('ObjectProcessor', () => {
         fields: [],
         app: mockApp as App,
         locale: 'en-US'
-      });
+      }) as Wobject[];
 
       expect(result).toHaveLength(1);
-      // @ts-ignore
       expect(result[0]).toHaveProperty('author_permlink', 'test-permlink');
+    });
+
+    it('should include affiliate fields for affiliate object', async () => {
+      vi.clearAllMocks();
+      mockFindParentsByPermlink.mockResolvedValue([]);
+      mockGetWaivioAdminsAndOwner.mockResolvedValue([]);
+      mockGetBlacklist.mockResolvedValue([]);
+      mockGetObjectsByGroupId.mockResolvedValue([]);
+
+      const requestedFields = [
+        FIELDS_NAMES.AFFILIATE_BUTTON,
+        FIELDS_NAMES.AFFILIATE_PRODUCT_ID_TYPES,
+        FIELDS_NAMES.AFFILIATE_GEO_AREA,
+        FIELDS_NAMES.AFFILIATE_URL_TEMPLATE,
+        FIELDS_NAMES.AFFILIATE_CODE,
+        FIELDS_NAMES.AUTHORITY,
+      ];
+
+      const result = await processor.processWobjects({
+        wobjects: [affiliateWobject],
+        fields: requestedFields,
+        app: affiliateApp,
+        locale: 'en-US',
+        reqUserName: 'wiv01',
+      }) as Wobject[];
+
+
+      expect(result).toHaveLength(1);
+      const affiliate = result[0] as Wobject & Record<string, unknown>;
+
+      const affiliateButton = affiliate[FIELDS_NAMES.AFFILIATE_BUTTON] as string;
+      expect(affiliateButton).toBe(
+        'https://waivio.nyc3.digitaloceanspaces.com/2610f03bee21da34c2318556c0ad3844db985e734ef036a32ff0332703671f96',
+      );
+
+      const productIdTypes = affiliate[FIELDS_NAMES.AFFILIATE_PRODUCT_ID_TYPES] as string[];
+      expect(productIdTypes).toHaveLength(2);
+      expect(productIdTypes).toEqual(expect.arrayContaining(['instacart', 'instacart.com']));
+      const geoAreas = affiliate[FIELDS_NAMES.AFFILIATE_GEO_AREA] as string[];
+      expect(geoAreas).toEqual(['GLOBAL']);
+
+      const urlTemplate = affiliate[FIELDS_NAMES.AFFILIATE_URL_TEMPLATE] as string;
+      expect(urlTemplate).toBe(
+        'https://instacart.impact.com/redirect.aspx?&mid=$affiliateCode&u=https%3A%2F%2Fwww.instacart.com%2Fproducts%2F$productId',
+      );
+      const affiliateCode = affiliate[FIELDS_NAMES.AFFILIATE_CODE] as string;
+      expect(affiliateCode).toBe('["www.waivio.com","test111111"]');
+
+      const authorityField = affiliate[FIELDS_NAMES.AUTHORITY] as Field | undefined;
+      expect(authorityField).toBeDefined();
+      expect(authorityField?.body).toBe('administrative');
     });
   });
 

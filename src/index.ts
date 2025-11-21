@@ -577,12 +577,12 @@ export class ObjectProcessor {
             } else if (_.includes(admins, vote.voter)) {
                 vote.admin = true;
                 if (vote.timestamp > _.get(adminVote, 'timestamp', 0)) adminVote = vote;
-            } else if (_.includes(administrative, vote.voter)) {
-                vote.administrative = true;
-                if (vote.timestamp > _.get(administrativeVote, 'timestamp', 0)) administrativeVote = vote;
             } else if (isOwnershipObj && _.includes(ownership, vote.voter)) {
                 vote.ownership = true;
                 if (vote.timestamp > _.get(ownershipVote, 'timestamp', 0)) ownershipVote = vote;
+            } else if (_.includes(administrative, vote.voter)) {
+                vote.administrative = true;
+                if (vote.timestamp > _.get(administrativeVote, 'timestamp', 0)) administrativeVote = vote;
             }
         });
 
