@@ -1,9 +1,9 @@
 export interface App {
-    owner?: string
-    admins?: string[]
-    authority?: string[]
-    trustedAll?: string[]
-    objectControl?: boolean
+    owner?: string;
+    admins?: string[];
+    authority?: string[];
+    trustedAll?: string[];
+    objectControl?: boolean;
     configuration?: {
         shopSettings?: {
             type?: string
@@ -13,25 +13,25 @@ export interface App {
 }
 
 export interface Authority {
-    administrative: string[]
-    ownership: string[]
+    administrative: string[];
+    ownership: string[];
 }
 
 export interface ActiveVote {
-    voter: string
-    weight: number
-    weightWAIV?: number
-    percent: number
-    rshares_weight: number
-    ownership?: boolean
-    administrative?: boolean
-    owner?: boolean
-    master?: boolean
-    admin?: boolean
+    voter: string;
+    weight: number;
+    weightWAIV?: number;
+    percent: number;
+    rshares_weight: number;
+    ownership?: boolean;
+    administrative?: boolean;
+    owner?: boolean;
+    master?: boolean;
+    admin?: boolean;
     _id?: {
         getTimestamp(): number
     }
-    timestamp?: number
+    timestamp?: number;
 }
 
 export interface AdminVote {
@@ -55,18 +55,20 @@ export interface Field {
     active_votes: ActiveVote[];
     weightWAIV?: number;
     createdAt?: number;
-    adminVote?: AdminVote
-    approvePercent?: number
-    startDate?: number
-    endDate?: number
-    items?: Field[]
-    id?: string
-    type?: string
+    adminVote?: AdminVote;
+    approvePercent?: number;
+    startDate?: number;
+    endDate?: number;
+    items?: Field[];
+    id?: string;
+    type?: string;
+    partNumber?:number;
+    totalParts?: number;
 }
 
 export interface ExposedFieldCounter {
-    name: string
-    value: number
+    name: string;
+    value: number;
 }
 
 
@@ -80,24 +82,24 @@ export interface WobjectStatus {
 }
 
 export interface NewsFilter {
-    title: string
-    permlink: string
-    name: string
+    title: string;
+    permlink: string;
+    name: string;
 }
 
 export interface AffiliateLink {
-    type: string
-    link: string
-    image: string
-    affiliateCode: string
+    type: string;
+    link: string;
+    image: string;
+    affiliateCode: string;
 }
 
 export interface AffiliateCodes {
-    affiliateUrlTemplate: string
-    affiliateCode: string[]
-    affiliateButton: string
-    affiliateProductIdTypes: string[]
-    affiliateGeoArea: string[]
+    affiliateUrlTemplate: string;
+    affiliateCode: string[];
+    affiliateButton: string;
+    affiliateProductIdTypes: string[];
+    affiliateGeoArea: string[];
 }
 
 interface OptionBody {
@@ -130,11 +132,11 @@ export interface OptionsMap {
 }
 
 export interface Wobject {
-    app: string
-    community: string
-    object_type: string
-    default_name: string
-    is_posting_open: boolean
+    app: string;
+    community: string;
+    object_type: string;
+    default_name: string;
+    is_posting_open: boolean;
     is_extending_open: boolean;
     creator: string;
     author: string;
@@ -162,7 +164,7 @@ export interface Wobject {
     topTags?: string[];
     exposedFields?: ExposedFieldCounter[];
     groupId?: string[];
-    options?: OptionsMap
-    menuItem?: Field[]
-    blog?: Field[]
+    options?: OptionsMap;
+    menuItem?: Field[];
+    blog?: Field[];
 }
