@@ -33,7 +33,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Waiviogit/objects-processor.git"
+    "url": "git+https://github.com/Waiviogit/objects-processor.git"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.16",
